@@ -3,9 +3,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-invoice-dashboard-2025-secret-key'
 AUTH_USER_MODEL = 'invoices.CustomUser'
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'False'  
 ALLOWED_HOSTS = ['mahmoudramadan.pythonanywhere.com','localhost','127.0.0.1']
-SECURE_BROWSER_XSS_FILTER = True
+# SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Let your middleware handle this
 
