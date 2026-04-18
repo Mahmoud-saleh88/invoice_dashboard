@@ -1,10 +1,15 @@
 # .gitignore
 *.pyc
+*~
 __pycache__/
 db.sqlite3
 media/
 staticfiles/
-.env
 *.log
+.env
 .vscode/
 .idea/
+*.pid
+*.sock
+.DS_Store
+Thumbs.db
