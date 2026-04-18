@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="data-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#1a237e,#283593)">
+        <h6><i class="fas fa-percentage me-2"></i> {{ title }}</h6>
+      </div>
+      <div class="p-4">
+        <div class="alert alert-info mb-4">
+          <i class="fas fa-info-circle me-2"></i>
+          سيتم احتساب قيم الضريبة تلقائياً من الفواتير الصادرة والمستلمة في الفترة المحددة.
+        </div>
+        <form method="POST">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">بداية الفترة <span class="text-danger">*</span></label>
+              {{ form.period_start }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">نهاية الفترة <span class="text-danger">*</span></label>
+              {{ form.period_end }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">نوع الفترة</label>
+              {{ form.period_type }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تاريخ الاستحقاق</label>
+              {{ form.due_date }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">ملاحظات</label>
+              {{ form.notes }}
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{% url 'vat_returns_list' %}" class="btn btn-outline-secondary">إلغاء</a>
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-calculator me-1"></i> إنشاء الإقرار وحساب الضريبة
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

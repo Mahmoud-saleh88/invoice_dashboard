@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-9 col-lg-11">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{% url 'chart_of_accounts' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-right me-1"></i> دليل الحسابات
+      </a>
+      <span class="text-muted small">/</span>
+      <span class="text-muted small">{{ title }}</span>
+    </div>
+
+    <div class="data-card">
+      <div class="card-header">
+        <h6>
+          <i class="fas {% if account %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"></i>
+          {{ title }}
+        </h6>
+        {% if account %}
+        <span class="badge" style="background:rgba(201,168,76,.15);color:var(--accent);font-size:.75rem">
+          {{ account.code }}
+        </span>
+        {% endif %}
+      </div>
+
+      <div class="p-4">
+        <form method="POST" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger mb-4" style="border-radius:10px">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Section: معلومات الحساب الأساسية -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-info-circle me-2" style="color:var(--accent)"></i>
+              معلومات الحساب الأساسية
+            </div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">كود الحساب <span class="text-danger">*</span></label>
+                {{ form.code }}
+                {% if form.code.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.code.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">مثال: 01010101</div>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">اسم الحساب بالعربية <span class="text-danger">*</span></label>
+                {{ form.name_ar }}
+                {% if form.name_ar.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.name_ar.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Account Name (English)</label>
+                {{ form.name_en }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Section: التصنيف والمجموعة -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-sitemap me-2" style="color:var(--accent)"></i>
+              التصنيف والهيكل
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">المجموعة <span class="text-danger">*</span></label>
+                {{ form.group }}
+                {% if form.group.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.group.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">نوع الحساب <span class="text-danger">*</span></label>
+                {{ form.account_type }}
+                {% if form.account_type.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.account_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">الطبيعة (Normal Balance) <span class="text-danger">*</span></label>
+                {{ form.normal_balance }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">الحساب الأب</label>
+                {{ form.parent }}
+                <div class="form-text">اتركه فارغاً إذا كان حساباً رئيسياً</div>
+              </div>
+              <div class="col-md-6 d-flex align-items-center">
+                <div class="toggle-wrapper mt-3">
+                  <div class="form-check form-switch form-check-lg">
+                    {{ form.is_active }}
+                    <label class="form-check-label fw-600" for="{{ form.is_active.id_for_label }}">
+                      الحساب نشط
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Section: الرصيد الافتتاحي -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-coins me-2" style="color:var(--accent)"></i>
+              الرصيد الافتتاحي
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">قيمة الرصيد الافتتاحي</label>
+                <div class="input-group">
+                  {{ form.opening_balance }}
+                  <span class="input-group-text" style="background:var(--secondary);color:rgba(255,255,255,.6);border:1.5px solid #dee2e6;border-right:none;font-size:.82rem">ر.س</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">تاريخ الرصيد الافتتاحي</label>
+                {{ form.opening_balance_date }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Section: ملاحظات -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-sticky-note me-2" style="color:var(--accent)"></i>
+              ملاحظات
+            </div>
+            {{ form.notes }}
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <a href="{% url 'chart_of_accounts' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-save me-1"></i>
+              {% if account %}حفظ التعديلات{% else %}إضافة الحساب{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,722 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل الدخول — شركة الوسام القوية للمقاولات</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --secondary: #16213e;
+    --accent: #C9A84C;
+    --accent-light: #f0d080;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Cairo', sans-serif; }
+
+  body {
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Simple background image with low opacity */
+  .bg-image {
+    position: fixed;
+    inset: 0;
+    background-image: url("{% static 'images/BG.png' %}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.20;
+    z-index: 0;
+    animation: zoomInBg 1.2s ease-out forwards;
+  }
+
+  @keyframes zoomInBg {
+    from {
+      transform: scale(1.05);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 0.20;
+    }
+  }
+
+  /* Simple overlay to ensure readability */
+  .bg-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 0%, var(--primary) 100%);
+    opacity: 0.4;
+    z-index: 1;
+    animation: fadeInOverlay 1s ease-out forwards;
+  }
+
+  @keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 0.4; }
+  }
+
+  /* Simple floating particles - animated */
+  .particle {
+    position: fixed;
+    width: 2px;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    animation: floatParticle 2s ease-out forwards;
+  }
+
+  @keyframes floatParticle {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0);
+    }
+    20% {
+      opacity: 0.3;
+    }
+    100% {
+      opacity: 0.1;
+      transform: translateY(-30px) scale(1);
+    }
+  }
+
+  /* Particle delays for staggered animation */
+  .particle:nth-child(1) { top: 10%; left: 20%; animation-delay: 0.1s; }
+  .particle:nth-child(2) { top: 30%; right: 25%; animation-delay: 0.3s; }
+  .particle:nth-child(3) { bottom: 20%; left: 30%; animation-delay: 0.5s; }
+  .particle:nth-child(4) { bottom: 40%; right: 15%; animation-delay: 0.7s; }
+  .particle:nth-child(5) { top: 60%; left: 10%; animation-delay: 0.9s; }
+  .particle:nth-child(6) { top: 75%; right: 35%; animation-delay: 1.1s; }
+  .particle:nth-child(7) { bottom: 10%; left: 45%; animation-delay: 1.3s; }
+  .particle:nth-child(8) { top: 15%; right: 60%; animation-delay: 1.5s; }
+
+  /* ── Card with enhanced entrance animation ── */
+  .login-wrapper {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 400px;
+    padding: 15px;
+    animation: cardSlideUp 0.8s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+  }
+
+  @keyframes cardSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .login-card {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 24px;
+    padding: 30px 30px 25px;
+    opacity: 0;
+    animation: cardGlowIn 0.7s cubic-bezier(0.34, 1.2, 0.64, 1) 0.1s forwards;
+  }
+
+  @keyframes cardGlowIn {
+    from {
+      opacity: 0;
+      transform: scale(0.98);
+      box-shadow: 0 0 0 0 rgba(201,168,76,0);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(201,168,76,0.1);
+    }
+  }
+
+  /* ── Logo with enhanced animation ── */
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: logoBounceIn 0.8s cubic-bezier(0.34, 1.2, 0.64, 1) 0.2s forwards;
+  }
+
+  @keyframes logoBounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.7) translateY(-20px);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .logo-circle {
+    width: 130px;
+    height: 130px;
+    margin: 0 auto 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 28px;
+    border: 2px solid rgba(201,168,76,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    transition: all 0.3s ease;
+    animation: logoGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes logoGlow {
+    0%, 100% {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 0 0 rgba(201,168,76,0);
+      border-color: rgba(201,168,76,0.4);
+    }
+    50% {
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 15px rgba(201,168,76,0.3);
+      border-color: rgba(201,168,76,0.7);
+    }
+  }
+
+  .logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    transition: transform 0.3s ease;
+  }
+
+  .logo-circle:hover img {
+    transform: scale(1.05);
+  }
+
+  .company-name {
+    color: var(--accent);
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1.4;
+    margin-bottom: 3px;
+    animation: textFadeIn 0.6s ease-out 0.4s forwards;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  .company-sub {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    animation: textFadeIn 0.6s ease-out 0.5s forwards;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  @keyframes textFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Simple divider with width animation */
+  .divider-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+    margin: 0 0 20px;
+    transform: scaleX(0);
+    animation: expandDivider 0.6s ease-out 0.55s forwards;
+    transform-origin: center;
+  }
+
+  @keyframes expandDivider {
+    from {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  /* ── Form heading with slide in ── */
+  .form-heading {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideInRight 0.5s ease-out 0.6s forwards;
+  }
+
+  .form-sub {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideInRight 0.5s ease-out 0.7s forwards;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* ── Simple error alerts with entrance ── */
+  .error-alert {
+    background: rgba(220,53,69,0.1);
+    border: 1px solid rgba(220,53,69,0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #ff8a94;
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: scale(0.95);
+    animation: alertPopIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+  }
+
+  @keyframes alertPopIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* ── Input fields with staggered entrance ── */
+  .field-group {
+    margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: fieldSlideUp 0.5s ease-out forwards;
+  }
+
+  .field-group:nth-of-type(1) { animation-delay: 0.75s; }
+  .field-group:nth-of-type(2) { animation-delay: 0.85s; }
+
+  @keyframes fieldSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .field-label {
+    display: block;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+
+  .field-wrap {
+    position: relative;
+  }
+
+  .field-wrap .field-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(201,168,76,0.5);
+    font-size: 0.85rem;
+    pointer-events: none;
+    transition: color 0.3s ease;
+  }
+
+  .field-wrap input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 12px 42px 12px 42px;
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  .field-wrap input:focus {
+    border-color: var(--accent);
+    background: rgba(201,168,76,0.04);
+    transform: scale(1.01);
+  }
+
+  .field-wrap input:focus + .field-icon {
+    color: var(--accent);
+  }
+
+  /* Password toggle */
+  .toggle-pw {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    padding: 5px;
+  }
+  .toggle-pw:hover { color: var(--accent); transform: translateY(-50%) scale(1.1); }
+
+  /* ── Submit button with pulse animation on hover ── */
+  .btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent) 0%, #b8922a 100%);
+    color: var(--primary);
+    border: none;
+    border-radius: 14px;
+    padding: 12px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(201,168,76,0.3);
+    letter-spacing: 0.5px;
+    opacity: 0;
+    transform: scale(0.95);
+    animation: buttonPopIn 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) 0.95s forwards;
+    position: relative;
+    overflow: hidden;
+  }
+
+  @keyframes buttonPopIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .btn-login:hover { 
+    transform: translateY(-2px) scale(1.01); 
+    box-shadow: 0 8px 25px rgba(201,168,76,0.5);
+  }
+  .btn-login:active { transform: translateY(0) scale(0.98); }
+
+  /* Button ripple effect */
+  .btn-login::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  .btn-login:active::before {
+    width: 200px;
+    height: 200px;
+  }
+
+  .btn-login .btn-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(26,26,46,0.3);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-login.loading .btn-text { display: none; }
+  .btn-login.loading .btn-spinner { display: block; }
+
+  /* ── Footer note with fade in ── */
+  .login-footer-note {
+    text-align: center;
+    color: rgba(255,255,255,0.2);
+    font-size: 0.7rem;
+    margin-top: 20px;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out 1.05s forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .login-footer-note i { 
+    color: var(--accent); 
+    font-size: 0.65rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+  }
+
+  .login-footer-note:hover i {
+    transform: rotate(360deg);
+  }
+
+  /* CSRF token is visible but styled */
+  input[name="csrfmiddlewaretoken"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* Additional subtle glow animation for the card border */
+  @keyframes borderPulse {
+    0%, 100% {
+      border-color: rgba(201,168,76,0.2);
+    }
+    50% {
+      border-color: rgba(201,168,76,0.4);
+    }
+  }
+
+  .login-card {
+    animation: cardGlowIn 0.7s cubic-bezier(0.34, 1.2, 0.64, 1) 0.1s forwards, borderPulse 3s ease-in-out 1.2s infinite;
+  }
+
+  /* Loading state for inputs */
+  .field-wrap input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+
+<!-- Simple background with just image and overlay -->
+<div class="bg-image"></div>
+<div class="bg-overlay"></div>
+
+<!-- Enhanced particles with more elements for better entrance -->
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+
+<!-- Login Card -->
+<div class="login-wrapper">
+  <div class="login-card">
+
+    <!-- Logo & company name -->
+    <div class="logo-wrap">
+      <div class="logo-circle">
+        <img src="{% static 'images/logo.png' %}" alt="شعار الشركة">
+      </div>
+      <div class="company-name">شركة الوسام القوية للمقاولات</div>
+      <div class="company-sub">AlWessam Elkawiya Contracting</div>
+    </div>
+
+    <div class="divider-line"></div>
+
+    <div class="form-heading">تسجيل الدخول</div>
+    <div class="form-sub">أدخل بياناتك للوصول إلى لوحة التحكم</div>
+
+    <!-- Error messages with entrance animation -->
+    {% if form.errors %}
+    <div class="error-alert">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>
+        {% if form.non_field_errors %}
+          {{ form.non_field_errors|first }}
+        {% else %}
+          بيانات الدخول غير صحيحة
+        {% endif %}
+      </span>
+    </div>
+    {% endif %}
+
+    {% if messages %}
+      {% for message in messages %}
+      <div class="error-alert" style="border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.05);color:var(--accent-light);">
+        <i class="fas fa-info-circle"></i>
+        <span>{{ message }}</span>
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Login form - REMEMBER ME REMOVED -->
+    <form method="POST" action="{% url 'login' %}" id="loginForm">
+      {% csrf_token %}
+
+      <!-- Username -->
+      <div class="field-group">
+        <label class="field-label">اسم المستخدم</label>
+        <div class="field-wrap">
+          <input
+            type="text"
+            id="id_username"
+            name="username"
+            placeholder="أدخل اسم المستخدم"
+            value="{{ form.username.value|default:'' }}"
+            autofocus
+            required
+          >
+          <i class="fas fa-user field-icon"></i>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="field-group">
+        <label class="field-label">كلمة المرور</label>
+        <div class="field-wrap">
+          <input
+            type="password"
+            id="id_password"
+            name="password"
+            placeholder="أدخل كلمة المرور"
+            required
+          >
+          <i class="fas fa-lock field-icon"></i>
+          <button type="button" class="toggle-pw" id="togglePw" tabindex="-1">
+            <i class="fas fa-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <button type="submit" class="btn-login" id="loginBtn">
+        <span class="btn-text">
+          <i class="fas fa-sign-in-alt" style="margin-left:8px;"></i>
+          دخول
+        </span>
+        <div class="btn-spinner"></div>
+      </button>
+    </form>
+
+    <div class="login-footer-note">
+      <i class="fas fa-shield-alt"></i>
+      جميع الحقوق محفوظة © {% now 'Y' %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Simple password toggle with animation
+  document.getElementById('togglePw').addEventListener('click', function() {
+    const pw = document.getElementById('id_password');
+    const eye = document.getElementById('eyeIcon');
+    if (pw.type === 'password') {
+      pw.type = 'text';
+      eye.className = 'fas fa-eye-slash';
+      // Add subtle animation
+      pw.style.transition = 'all 0.2s ease';
+    } else {
+      pw.type = 'password';
+      eye.className = 'fas fa-eye';
+    }
+  });
+
+  // Simple loading state with disabled animation
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const btn = document.getElementById('loginBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    
+    // Disable inputs for better UX
+    const inputs = document.querySelectorAll('#loginForm input');
+    inputs.forEach(input => {
+      input.disabled = false; // Don't disable CSRF and other inputs
+    });
+  });
+
+  // Add hover effect to the logo circle for extra interactivity
+  const logoCircle = document.querySelector('.logo-circle');
+  if (logoCircle) {
+    logoCircle.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.02)';
+      this.style.transition = 'transform 0.3s ease';
+    });
+    logoCircle.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  }
+
+  // Add focus animation to inputs
+  const inputs = document.querySelectorAll('.field-wrap input');
+  inputs.forEach(input => {
+    input.addEventListener('focus', function() {
+      this.parentElement.style.transform = 'translateX(2px)';
+    });
+    input.addEventListener('blur', function() {
+      this.parentElement.style.transform = 'translateX(0)';
+    });
+  });
+
+  // Optional: Add a subtle parallax effect to background on mousemove (lightweight)
+  document.addEventListener('mousemove', function(e) {
+    const bgImage = document.querySelector('.bg-image');
+    if (bgImage) {
+      const mouseX = e.clientX / window.innerWidth;
+      const mouseY = e.clientY / window.innerHeight;
+      const moveX = (mouseX - 0.5) * 8;
+      const moveY = (mouseY - 0.5) * 8;
+      bgImage.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.02)`;
+      bgImage.style.transition = 'transform 0.1s ease-out';
+    }
+  });
+</script>
+</body>
+</html>

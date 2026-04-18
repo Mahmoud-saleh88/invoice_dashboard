@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}كشف حساب عميل: {{ client.name }}{% endblock %}
+{% block page_title %}كشف حساب العميل{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 class="mb-1">{{ client.name }}</h5>
+    {% if client.vat_number %}<span class="badge bg-secondary">الرقم الضريبي: {{ client.vat_number }}</span>{% endif %}
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'receipts_list' %}" class="btn btn-outline-secondary">رجوع</a>
+    <button onclick="window.print()" class="btn btn-outline-primary">
+      <i class="fas fa-print me-1"></i> طباعة
+    </button>
+  </div>
+</div>
+
+<!-- فلاتر -->
+<div class="data-card mb-4">
+  <div class="p-3">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">من تاريخ</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">إلى تاريخ</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-gold btn-sm w-100">تطبيق</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ملخص -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">إجمالي الفواتير</div>
+      <div class="value text-danger">{{ total_invoiced|floatformat:2 }}</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">إجمالي المدفوعات</div>
+      <div class="value text-success">{{ total_receipts|floatformat:2 }}</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">الرصيد المستحق</div>
+      <div class="value" style="color:var(--accent)">{{ balance|floatformat:2 }}</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">عدد الفواتير</div>
+      <div class="value">{{ invoices_count }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- كشف الحساب -->
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-book-open me-2"></i> كشف الحساب</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover table-sm mb-0">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>النوع</th>
+          <th>المرجع</th>
+          <th>البيان</th>
+          <th class="text-end" style="color:#f44336">مدين</th>
+          <th class="text-end" style="color:#4CAF50">دائن</th>
+          <th class="text-end">الرصيد</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- رصيد أول المدة -->
+        <tr style="background:#f8f9fa;font-weight:600">
+          <td colspan="4">رصيد أول المدة</td>
+          <td class="text-end">—</td>
+          <td class="text-end">—</td>
+          <td class="text-end" style="color:var(--accent)">{{ opening_balance|floatformat:2 }}</td>
+        </tr>
+        {% for row in statement_rows %}
+        <tr>
+          <td>{{ row.date }}</td>
+          <td>
+            <span class="badge 
+              {% if row.type == 'invoice' %}bg-danger bg-opacity-75
+              {% else %}bg-success bg-opacity-75{% endif %}">
+              {% if row.type == 'invoice' %}فاتورة{% else %}قبض{% endif %}
+            </span>
+          </td>
+          <td><a href="{{ row.url }}" style="color:var(--accent)">{{ row.reference }}</a></td>
+          <td class="small text-muted">{{ row.description|truncatechars:40 }}</td>
+          <td class="text-end" style="color:#f44336">{% if row.debit %}{{ row.debit|floatformat:2 }}{% else %}—{% endif %}</td>
+          <td class="text-end" style="color:#4CAF50">{% if row.credit %}{{ row.credit|floatformat:2 }}{% else %}—{% endif %}</td>
+          <td class="text-end fw-bold">{{ row.running_balance|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-3">لا توجد حركات</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot style="background:var(--secondary);color:#fff">
+        <tr>
+          <td colspan="4" class="fw-bold text-center">الإجماليات</td>
+          <td class="text-end fw-bold" style="color:#f44336">{{ total_invoiced|floatformat:2 }}</td>
+          <td class="text-end fw-bold" style="color:#4CAF50">{{ total_receipts|floatformat:2 }}</td>
+          <td class="text-end fw-bold" style="color:var(--accent)">{{ balance|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<style>
+@media print {
+  #sidebar, .topbar, form, .no-print { display: none !important; }
+  #main-content { margin: 0 !important; }
+}
+</style>
+{% endblock %}

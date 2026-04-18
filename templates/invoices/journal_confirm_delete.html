@@ -1,0 +1,83 @@
+<!-- templates/invoices/journal_confirm_delete.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف القيد {{ entry.number }}{% endblock %}
+{% block page_title %}تأكيد الحذف{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="data-card">
+      <div class="card-header" style="background: #dc3545;">
+        <h6 class="text-white mb-0">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          تأكيد حذف القيد
+        </h6>
+      </div>
+      <div class="p-4">
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه!
+        </div>
+
+        <div class="text-center mb-4">
+          <i class="fas fa-trash fa-3x text-danger mb-3 opacity-50"></i>
+          <h5>هل أنت متأكد من حذف القيد التالي؟</h5>
+        </div>
+
+        <table class="table table-bordered mb-4">
+          <tr>
+            <th width="35%">رقم القيد</th>
+            <td><strong style="color: var(--accent);">{{ entry.number }}</strong></td>
+          </tr>
+          <tr>
+            <th>التاريخ</th>
+            <td>{{ entry.date|date:"Y-m-d" }}</td>
+          </tr>
+          <tr>
+            <th>النوع</th>
+            <td>{{ entry.get_entry_type_display }}</td>
+          </tr>
+          <tr>
+            <th>البيان</th>
+            <td>{{ entry.description }}</td>
+          </tr>
+          <tr>
+            <th>عدد البنود</th>
+            <td>{{ entry.lines.count }} بند</td>
+          </tr>
+          <tr>
+            <th>الحالة</th>
+            <td>
+              <span class="badge bg-warning text-dark">{{ entry.get_status_display }}</span>
+            </td>
+          </tr>
+          <tr>
+            <th>أنشئ بواسطة</th>
+            <td>{{ entry.created_by.get_full_name|default:entry.created_by.username }}</td>
+          </tr>
+        </table>
+
+        <form method="POST">
+          {% csrf_token %}
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'journal_entries_list' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-trash me-1"></i> نعم، احذف القيد
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- ملاحظة -->
+    <div class="alert alert-info mt-3 small">
+      <i class="fas fa-info-circle me-2"></i>
+      <strong>ملاحظة:</strong> لا يمكن حذف القيود المرحّلة. يجب عكسها أولاً.
+    </div>
+  </div>
+</div>
+{% endblock %}

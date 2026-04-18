@@ -1,0 +1,10 @@
+{
+  "xsdPath": "C:\\Users\\Ramadona\\Downloads\\zatca-einvoicing-sdk-Java-238-R3.4.8\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Data\\Schemas\\xsds\\UBL2.1\\xsd\\maindoc\\UBL-Invoice-2.1.xsd",
+  "enSchematron": "C:\\Users\\Ramadona\\Downloads\\zatca-einvoicing-sdk-Java-238-R3.4.8\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Data\\Rules\\schematrons\\CEN-EN16931-UBL.xsl",
+  "zatcaSchematron": "C:\\Users\\Ramadona\\Downloads\\zatca-einvoicing-sdk-Java-238-R3.4.8\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Data\\Rules\\schematrons\\20210819_ZATCA_E-invoice_Validation_Rules.xsl",
+  "certPath": "D:\\python_projects\\Alwessam_contracting\\Alwessam_contracting\\zatca_sdk\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Data\\Certificates\\active_cert.cer",
+  "privateKeyPath": "D:\\python_projects\\Alwessam_contracting\\Alwessam_contracting\\zatca_sdk\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Data\\Certificates\\active_key.pem",
+  "pihPath": "C:\\Users\\Ramadona\\Downloads\\zatca-einvoicing-sdk-Java-238-R3.4.8\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Data\\PIH\\pih.txt",
+  "inputPath": "C:\\Users\\Ramadona\\Downloads\\zatca-einvoicing-sdk-Java-238-R3.4.8\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Data\\Input",
+  "usagePathFile": "C:\\Users\\Ramadona\\Downloads\\zatca-einvoicing-sdk-Java-238-R3.4.8\\zatca-einvoicing-sdk-Java-238-R3.4.8\\Configuration\\usage.txt"
+}

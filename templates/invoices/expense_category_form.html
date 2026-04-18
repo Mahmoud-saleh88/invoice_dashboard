@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-tag me-2"></i> {{ title }}</h6>
+      </div>
+      <div class="p-4">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">اسم وجه الصرف بالعربية <span class="text-danger">*</span></label>
+              {{ form.name_ar }}
+              {% if form.name_ar.errors %}<div class="text-danger small">{{ form.name_ar.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">الاسم الإنجليزي</label>
+              {{ form.name }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">الحساب المرتبط <span class="text-danger">*</span></label>
+              {{ form.account }}
+              <div class="form-text">حساب المصروفات المرتبط بهذا الوجه</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">وصف</label>
+              {{ form.description }}
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                {{ form.is_active }}
+                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">نشط</label>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{% url 'expense_categories_list' %}" class="btn btn-outline-secondary">إلغاء</a>
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-save me-1"></i> {{ button_text }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

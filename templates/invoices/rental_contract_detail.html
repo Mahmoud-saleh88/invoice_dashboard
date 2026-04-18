@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}عقد رقم {{ contract.contract_number }}{% endblock %}
+{% block page_title %}تفاصيل عقد الإيجار{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 class="mb-1" style="color:var(--primary)">{{ contract.contract_number }}</h5>
+    <span class="badge 
+      {% if contract.status == 'active' %}bg-success
+      {% elif contract.status == 'expired' %}bg-danger
+      {% else %}bg-secondary{% endif %} fs-6">
+      {{ contract.get_status_display }}
+    </span>
+    <span class="badge bg-info text-dark ms-1">{{ contract.get_contract_type_display }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'rental_contracts_list' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-right me-1"></i> رجوع
+    </a>
+    <a href="{% url 'rental_contract_edit' contract.pk %}" class="btn btn-outline-warning">
+      <i class="fas fa-edit me-1"></i> تعديل
+    </a>
+    <button onclick="window.print()" class="btn btn-outline-primary">
+      <i class="fas fa-print me-1"></i> طباعة
+    </button>
+  </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">القيمة السنوية</div>
+      <div class="value" style="color:var(--accent)">{{ contract.annual_rent|floatformat:2 }}</div>
+      <div class="small text-muted">ريال سعودي</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">ضريبة القيمة المضافة</div>
+      <div class="value text-warning">{{ contract.vat_rate }}%</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">أيام حتى الانتهاء</div>
+      <div class="value {% if contract.days_until_expiry <= 30 %}text-danger{% else %}text-success{% endif %}">
+        {% if contract.days_until_expiry >= 0 %}{{ contract.days_until_expiry }}{% else %}منتهي{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">دورة الدفع</div>
+      <div class="value fs-5">{{ contract.get_payment_frequency_display }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- معلومات العقد -->
+  <div class="col-md-6">
+    <div class="data-card h-100">
+      <div class="card-header">
+        <h6><i class="fas fa-file-contract me-2"></i> معلومات العقد</h6>
+      </div>
+      <div class="p-3">
+        <table class="table table-borderless table-sm mb-0">
+          <tr><th width="40%" class="text-muted">رقم العقد</th><td><strong style="color:var(--accent)">{{ contract.contract_number }}</strong></td></tr>
+          <tr><th class="text-muted">العميل</th><td><strong>{{ contract.client.name }}</strong></td></tr>
+          <tr><th class="text-muted">نوع العقد</th><td>{{ contract.get_contract_type_display }}</td></tr>
+          <tr><th class="text-muted">تاريخ البدء</th><td>{{ contract.start_date }}</td></tr>
+          <tr><th class="text-muted">تاريخ الانتهاء</th><td>{{ contract.end_date }}</td></tr>
+          <tr><th class="text-muted">العقار / الموقع</th><td>{{ contract.property_address|default:"—" }}</td></tr>
+          <tr><th class="text-muted">رقم الوحدة</th><td>{{ contract.unit_number|default:"—" }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- تفاصيل مالية -->
+  <div class="col-md-6">
+    <div class="data-card h-100">
+      <div class="card-header">
+        <h6><i class="fas fa-calculator me-2"></i> التفاصيل المالية</h6>
+      </div>
+      <div class="p-3">
+        <table class="table table-borderless table-sm mb-0">
+          <tr><th width="40%" class="text-muted">الإيجار السنوي</th><td><strong>{{ contract.annual_rent|floatformat:2 }} ر.س</strong></td></tr>
+          <tr><th class="text-muted">ضريبة القيمة المضافة</th><td>{{ contract.vat_rate }}%</td></tr>
+          <tr><th class="text-muted">ضريبة القيمة المضافة سنوياً</th><td class="text-warning">{{ vat_annual|floatformat:2 }} ر.س</td></tr>
+          <tr><th class="text-muted">الإجمالي شامل الضريبة</th><td style="color:var(--accent)"><strong>{{ total_with_vat|floatformat:2 }} ر.س</strong></td></tr>
+          <tr><th class="text-muted">دورة الدفع</th><td>{{ contract.get_payment_frequency_display }}</td></tr>
+          <tr><th class="text-muted">قيمة الدورة (شامل الضريبة)</th><td class="text-success fw-bold">{{ period_amount|floatformat:2 }} ر.س</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- وصف العقار -->
+{% if contract.property_description %}
+<div class="data-card mt-4">
+  <div class="card-header"><h6><i class="fas fa-building me-2"></i> وصف العين المؤجرة</h6></div>
+  <div class="p-3">{{ contract.property_description }}</div>
+</div>
+{% endif %}
+
+<!-- جدول دفعات الإيجار -->
+<div class="data-card mt-4">
+  <div class="card-header">
+    <h6><i class="fas fa-calendar-check me-2"></i> جدول الدفعات</h6>
+    <div class="d-flex gap-2">
+      <span class="badge bg-success">مدفوع: {{ paid_count }}</span>
+      <span class="badge bg-warning text-dark">معلق: {{ pending_count }}</span>
+      <span class="badge bg-danger">متأخر: {{ overdue_count }}</span>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover table-sm mb-0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>تاريخ الاستحقاق</th>
+          <th class="text-end">مبلغ الإيجار</th>
+          <th class="text-end">ضريبة القيمة المضافة</th>
+          <th class="text-end">الإجمالي</th>
+          <th>الحالة</th>
+          <th>تاريخ الدفع</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in rental_payments %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ pay.due_date }}</td>
+          <td class="text-end">{{ pay.rent_amount|floatformat:2 }}</td>
+          <td class="text-end text-warning">{{ pay.vat_amount|floatformat:2 }}</td>
+          <td class="text-end fw-bold">{{ pay.total_amount|floatformat:2 }}</td>
+          <td>
+            <span class="badge 
+              {% if pay.status == 'paid' %}bg-success
+              {% elif pay.status == 'overdue' %}bg-danger
+              {% else %}bg-warning text-dark{% endif %}">
+              {% if pay.status == 'paid' %}مدفوع
+              {% elif pay.status == 'overdue' %}متأخر
+              {% else %}معلق{% endif %}
+            </span>
+          </td>
+          <td>{{ pay.paid_date|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-3">لا توجد دفعات مجدولة</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if contract.terms %}
+<div class="data-card mt-4">
+  <div class="card-header"><h6><i class="fas fa-list-ul me-2"></i> بنود العقد</h6></div>
+  <div class="p-3" style="white-space:pre-wrap">{{ contract.terms }}</div>
+</div>
+{% endif %}
+
+<style>
+@media print {
+  #sidebar, .topbar, .d-flex.justify-content-between { display: none !important; }
+  #main-content { margin: 0 !important; }
+}
+</style>
+{% endblock %}

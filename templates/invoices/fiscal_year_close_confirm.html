@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إغلاق السنة المالية {{ fiscal_year.name }}{% endblock %}
+{% block page_title %}إغلاق السنة المالية{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="data-card">
+      <div class="card-header" style="background: #e65100;">
+        <h6 class="text-white mb-0">
+          <i class="fas fa-lock me-2"></i>
+          تأكيد إغلاق السنة المالية
+        </h6>
+      </div>
+      <div class="p-4">
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>تحذير:</strong> إغلاق السنة المالية إجراء لا يمكن التراجع عنه. سيتم منع أي تعديلات على القيود في هذه الفترة.
+        </div>
+
+        <table class="table table-bordered mb-4">
+          <tr>
+            <th width="35%">اسم السنة المالية</th>
+            <td><strong>{{ fiscal_year.name }}</strong></td>
+          </tr>
+          <tr>
+            <th>تاريخ البداية</th>
+            <td>{{ fiscal_year.start_date|date:"Y-m-d" }}</td>
+          </tr>
+          <tr>
+            <th>تاريخ النهاية</th>
+            <td>{{ fiscal_year.end_date|date:"Y-m-d" }}</td>
+          </tr>
+          <tr>
+            <th>الحالة</th>
+            <td>
+              {% if fiscal_year.is_closed %}
+              <span class="badge bg-secondary">مغلقة</span>
+              {% else %}
+              <span class="badge bg-success">مفتوحة</span>
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+
+        {% if draft_entries > 0 %}
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          يوجد {{ draft_entries }} قيد في حالة مسودة ضمن هذه السنة المالية.
+        </div>
+        {% endif %}
+
+        <form method="POST">
+          {% csrf_token %}
+          
+          {% if draft_entries > 0 %}
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="post_drafts" value="yes" id="postDrafts" checked>
+              <label class="form-check-label" for="postDrafts">
+                <strong>ترحيل جميع المسودات تلقائياً</strong>
+                <br>
+                <small class="text-muted">سيتم ترحيل {{ draft_entries }} قيد مسودة قبل الإغلاق</small>
+              </label>
+            </div>
+          </div>
+          {% endif %}
+          
+          <div class="mb-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="create_closing_entry" value="yes" id="createClosing" checked>
+              <label class="form-check-label" for="createClosing">
+                <strong>إنشاء قيد إقفال تلقائي</strong>
+                <br>
+                <small class="text-muted">سيتم إنشاء قيد إقفال لترحيل صافي الدخل إلى الأرباح المحتجزة</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'fiscal_years_list' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-lock me-1"></i> تأكيد الإغلاق
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

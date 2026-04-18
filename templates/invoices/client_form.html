@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-10 col-lg-12">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{% url 'client_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-right me-1"></i> العملاء
+      </a>
+      <span class="text-muted small">/</span>
+      <span class="text-muted small">{{ title }}</span>
+    </div>
+
+    <div class="data-card">
+      <div class="card-header">
+        <h6>
+          <i class="fas {% if client %}fa-user-edit{% else %}fa-user-plus{% endif %} me-2"></i>
+          {{ title }}
+        </h6>
+      </div>
+
+      <div class="p-4">
+        <form method="POST" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger mb-4" style="border-radius:10px">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Section: البيانات الأساسية -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-user me-2" style="color:var(--accent)"></i>
+              البيانات الأساسية
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">اسم العميل (عربي) <span class="text-danger">*</span></label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Client Name (English)</label>
+                {{ form.name_en }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">الرقم الضريبي (VAT)</label>
+                {{ form.vat_number }}
+                {% if form.vat_number.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.vat_number.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">15 رقماً يبدأ وينتهي بـ 3</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">السجل التجاري</label>
+                {{ form.cr_number }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">البريد الإلكتروني</label>
+                {{ form.email }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">رقم الهاتف</label>
+                {{ form.phone }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Section: عنوان زاتكا -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-map-marker-alt me-2" style="color:var(--accent)"></i>
+              عنوان زاتكا
+              <span class="badge ms-2" style="background:rgba(201,168,76,.12);color:var(--accent);font-size:.68rem;font-weight:600">
+                ZATCA Phase 2
+              </span>
+            </div>
+            <div class="alert mb-3" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:10px 14px;font-size:.83rem;color:#6b5400">
+              <i class="fas fa-info-circle me-2" style="color:var(--accent)"></i>
+              هذه الحقول مطلوبة لإصدار الفواتير الإلكترونية المتوافقة مع زاتكا (المرحلة الثانية)
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">اسم الشارع <span class="text-muted small">(BT-50)</span></label>
+                {{ form.street_name }}
+                {% if form.street_name.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.street_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">رقم المبنى <span class="text-muted small">(KSA-18)</span></label>
+                {{ form.building_number }}
+                {% if form.building_number.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.building_number.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">4 أرقام بالضبط</div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">الرمز البريدي <span class="text-muted small">(BT-53)</span></label>
+                {{ form.postal_code }}
+                {% if form.postal_code.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.postal_code.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">5 أرقام بالضبط</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">الحي <span class="text-muted small">(KSA-4)</span></label>
+                {{ form.district }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">المدينة <span class="text-muted small">(BT-52)</span></label>
+                {{ form.city }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">الدولة</label>
+                <input type="text" class="form-control" value="Saudi Arabia" readonly style="background:#e9ecef">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Section: بيانات الائتمان -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-credit-card me-2" style="color:var(--accent)"></i>
+              بيانات الائتمان
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">حد الائتمان (ر.س)</label>
+                <div class="input-group">
+                  {{ form.credit_limit }}
+                  <span class="input-group-text" style="background:var(--secondary);color:rgba(255,255,255,.6);border:1.5px solid #dee2e6;font-size:.82rem">ر.س</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <a href="{% url 'client_list' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-save me-1"></i> {{ button_text }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

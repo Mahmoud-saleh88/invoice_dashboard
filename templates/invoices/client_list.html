@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة العملاء{% endblock %}
+
+{% block page_title %}إدارة العملاء{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="data-card">
+            <div class="card-header">
+                <h6><i class="fas fa-users me-2"></i> قائمة العملاء</h6>
+                <a href="{% url 'client_create' %}" class="btn btn-gold btn-sm">
+                    <i class="fas fa-plus"></i> إضافة عميل جديد
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="p-3 bg-light border-bottom">
+                    <form method="GET" action="{% url 'client_list' %}" class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="بحث باسم العميل أو الرقم الضريبي أو البريد الإلكتروني..." 
+                               value="{{ search_query }}">
+                    </form>
+                </div>
+                
+                {% if clients %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اسم العميل</th>
+                                <th>العنوان</th>
+                                <th>الرقم الضريبي</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>الرمز البريدي</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="fw-bold">{{ client.name }}</td>
+                                <td>{{ client.address|default:"-"|truncatechars:50 }}</td>
+                                <td>{{ client.vat_number|default:"-" }}</td>
+                                <td>{{ client.email|default:"-" }}</td>
+                                <td>{{ client.postal_code|default:"-" }}</td>
+                                <td>
+                                    <a href="{% url 'client_edit' client.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> تعديل
+                                    </a>
+                                    <a href="{% url 'client_delete' client.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-3">لا توجد عملاء مسجلين</p>
+                    <a href="{% url 'client_create' %}" class="btn btn-gold">
+                        <i class="fas fa-plus"></i> إضافة عميل جديد
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

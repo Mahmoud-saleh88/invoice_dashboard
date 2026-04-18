@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ fiscal_year.name }} - تفاصيل السنة المالية{% endblock %}
+{% block page_title %}{{ fiscal_year.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    height: 100%;
+}
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.stat-label {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+.status-badge {
+    font-size: 1rem;
+    padding: 8px 16px;
+    border-radius: 30px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header with Status -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'fiscal_years_list' %}">السنوات المالية</a></li>
+                <li class="breadcrumb-item active">{{ fiscal_year.name }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'fiscal_years_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i> رجوع
+        </a>
+        {% if not fiscal_year.is_closed %}
+        <a href="{% url 'fiscal_year_edit' fiscal_year.pk %}" class="btn btn-outline-warning">
+            <i class="fas fa-edit me-1"></i> تعديل
+        </a>
+        <a href="{% url 'fiscal_year_close_confirm' fiscal_year.pk %}" class="btn btn-warning">
+            <i class="fas fa-lock me-1"></i> إغلاق السنة
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Year Info Card -->
+<div class="data-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6><i class="fas fa-calendar-alt me-2"></i> معلومات السنة المالية</h6>
+        <span class="badge {% if fiscal_year.is_closed %}bg-secondary{% else %}bg-success{% endif %} status-badge">
+            <i class="fas {% if fiscal_year.is_closed %}fa-lock{% else %}fa-unlock{% endif %} me-1"></i>
+            {% if fiscal_year.is_closed %}مغلقة{% else %}مفتوحة{% endif %}
+        </span>
+    </div>
+    <div class="p-4">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="text-muted small">اسم السنة المالية</label>
+                <div class="fw-bold fs-5">{{ fiscal_year.name }}</div>
+            </div>
+            <div class="col-md-4">
+                <label class="text-muted small">تاريخ البداية</label>
+                <div class="fw-bold">{{ fiscal_year.start_date|date:"Y-m-d" }}</div>
+            </div>
+            <div class="col-md-4">
+                <label class="text-muted small">تاريخ النهاية</label>
+                <div class="fw-bold">{{ fiscal_year.end_date|date:"Y-m-d" }}</div>
+            </div>
+            {% if fiscal_year.is_closed %}
+            <div class="col-md-4 mt-3">
+                <label class="text-muted small">تاريخ الإغلاق</label>
+                <div class="fw-bold">{{ fiscal_year.closed_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            {% endif %}
+            <div class="col-md-4 mt-3">
+                <label class="text-muted small">المدة</label>
+                <div class="fw-bold">{{ fiscal_year.start_date|timesince:fiscal_year.end_date }}</div>
+            </div>
+            <div class="col-md-4 mt-3">
+                <label class="text-muted small">الشركة</label>
+                <div class="fw-bold">{{ fiscal_year.company.name|default:"—" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-value">{{ stats.total_entries }}</div>
+                    <div class="stat-label">إجمالي القيود</div>
+                </div>
+                <div class="stat-icon" style="background: #e3f2fd;">
+                    <i class="fas fa-book text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-value text-success">{{ stats.posted_entries }}</div>
+                    <div class="stat-label">قيود مرحّلة</div>
+                </div>
+                <div class="stat-icon" style="background: #e8f5e9;">
+                    <i class="fas fa-check-circle text-success"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-value text-warning">{{ stats.draft_entries }}</div>
+                    <div class="stat-label">قيود مسودة</div>
+                </div>
+                <div class="stat-icon" style="background: #fff3e0;">
+                    <i class="fas fa-pencil-alt text-warning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-value text-info">{{ stats.reversed_entries }}</div>
+                    <div class="stat-label">قيود معكوسة</div>
+                </div>
+                <div class="stat-icon" style="background: #e0f7fa;">
+                    <i class="fas fa-undo text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="data-card mb-4">
+    <div class="card-header">
+        <h6><i class="fas fa-chart-pie me-2"></i> تقدم السنة المالية</h6>
+    </div>
+    <div class="p-4">
+        {% with days_passed=fiscal_year.start_date|timesince:fiscal_year.end_date %}
+        <div class="mb-2 d-flex justify-content-between">
+            <span>{{ fiscal_year.start_date|date:"Y-m-d" }}</span>
+            <span class="text-muted">اليوم: {% now "Y-m-d" %}</span>
+            <span>{{ fiscal_year.end_date|date:"Y-m-d" }}</span>
+        </div>
+        <div class="progress" style="height: 12px;">
+            {% now "Y-m-d" as today %}
+            {% if today < fiscal_year.start_date|date:"Y-m-d" %}
+                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+            {% elif today > fiscal_year.end_date|date:"Y-m-d" %}
+                <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+            {% else %}
+                {% with start=fiscal_year.start_date|date:"U" end=fiscal_year.end_date|date:"U" now=now|date:"U" %}
+                {% widthratio now|add:start|add:end 1 1 as pct %}
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ pct }}%"></div>
+                {% endwith %}
+            {% endif %}
+        </div>
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Monthly Totals -->
+{% if monthly_totals %}
+<div class="data-card mb-4">
+    <div class="card-header">
+        <h6><i class="fas fa-chart-bar me-2"></i> إجماليات شهرية</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>الشهر</th>
+                    <th class="text-end">عدد القيود</th>
+                    <th class="text-end text-success">إجمالي مدين</th>
+                    <th class="text-end text-danger">إجمالي دائن</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for month in monthly_totals %}
+                <tr>
+                    <td>{{ month.month|date:"Y-m" }}</td>
+                    <td class="text-end">{{ month.count }}</td>
+                    <td class="text-end text-success">{{ month.debit|floatformat:2|default:"0.00" }}</td>
+                    <td class="text-end text-danger">{{ month.credit|floatformat:2|default:"0.00" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Journal Entries in this Fiscal Year -->
+<div class="data-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6><i class="fas fa-list me-2"></i> آخر القيود في هذه السنة</h6>
+        <a href="{% url 'journal_entries_list' %}?date_from={{ fiscal_year.start_date|date:'Y-m-d' }}&date_to={{ fiscal_year.end_date|date:'Y-m-d' }}" 
+           class="btn btn-sm btn-outline-primary">
+            عرض الكل
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>رقم القيد</th>
+                    <th>التاريخ</th>
+                    <th>النوع</th>
+                    <th>البيان</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in recent_entries %}
+                <tr>
+                    <td>
+                        <a href="{% url 'journal_entry_detail' entry.pk %}" class="text-decoration-none" style="color: var(--accent);">
+                            {{ entry.number }}
+                        </a>
+                    </td>
+                    <td>{{ entry.date|date:"Y-m-d" }}</td>
+                    <td><span class="badge bg-secondary">{{ entry.get_entry_type_display }}</span></td>
+                    <td class="text-truncate" style="max-width: 300px;">{{ entry.description }}</td>
+                    <td>
+                        {% if entry.status == 'posted' %}
+                        <span class="badge bg-success">مرحّل</span>
+                        {% elif entry.status == 'draft' %}
+                        <span class="badge bg-warning text-dark">مسودة</span>
+                        {% elif entry.status == 'reversed' %}
+                        <span class="badge bg-info">معكوس</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+                        لا توجد قيود في هذه السنة المالية
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

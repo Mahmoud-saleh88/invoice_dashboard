@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}تسجيل إهلاك: {{ asset.name }}{% endblock %}
+{% block page_title %}تسجيل قيد الإهلاك{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="data-card mb-4">
+      <div class="card-header" style="background:linear-gradient(135deg,#e65100,#bf360c)">
+        <h6><i class="fas fa-chart-line me-2"></i> تسجيل إهلاك: {{ asset.name }}</h6>
+      </div>
+      <div class="p-4">
+        <!-- ملخص الأصل -->
+        <div class="row g-3 mb-4 p-3 rounded" style="background:#f8f9fa">
+          <div class="col-4 text-center">
+            <div class="small text-muted">التكلفة الأصلية</div>
+            <div class="fw-bold">{{ asset.cost|floatformat:2 }} ر.س</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="small text-muted">مجمع الإهلاك</div>
+            <div class="fw-bold text-warning">{{ asset.accumulated_depreciation|floatformat:2 }} ر.س</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="small text-muted">صافي القيمة الدفترية</div>
+            <div class="fw-bold" style="color:var(--accent)">{{ asset.book_value|floatformat:2 }} ر.س</div>
+          </div>
+        </div>
+
+        <!-- المقترح -->
+        <div class="alert alert-info">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>الإهلاك السنوي المقترح:</strong> {{ suggested_annual|floatformat:2 }} ر.س
+          &nbsp;|&nbsp;
+          <strong>الشهري:</strong> {{ suggested_monthly|floatformat:2 }} ر.س
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">تاريخ القيد <span class="text-danger">*</span></label>
+              {{ form.date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">مبلغ الإهلاك (ر.س) <span class="text-danger">*</span></label>
+              {{ form.amount }}
+              <div class="form-text">القيمة الدفترية المتبقية: <strong>{{ asset.book_value|floatformat:2 }}</strong> ر.س</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">الفترة / البيان</label>
+              {{ form.period_description }}
+            </div>
+          </div>
+
+          <!-- معاينة القيد -->
+          <div class="mt-4 p-3 rounded" style="background:#fff8e1;border:2px dashed #ff9800">
+            <div class="fw-bold mb-2 text-center" style="color:#e65100">
+              <i class="fas fa-eye me-1"></i> معاينة القيد المحاسبي
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered mb-0">
+                <thead><tr><th>الحساب</th><th class="text-center" style="color:#4CAF50">مدين</th><th class="text-center" style="color:#f44336">دائن</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>مصروف الإهلاك<br><small class="text-muted">{{ asset.depreciation_account.code|default:"—" }}</small></td>
+                    <td class="text-center fw-bold text-success" id="preview-amount">—</td>
+                    <td class="text-center">—</td>
+                  </tr>
+                  <tr>
+                    <td>مجمع إهلاك {{ asset.get_asset_type_display }}<br><small class="text-muted">{{ asset.depreciation_account.code|default:"—" }}</small></td>
+                    <td class="text-center">—</td>
+                    <td class="text-center fw-bold text-danger" id="preview-amount2">—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{% url 'fixed_asset_detail' asset.pk %}" class="btn btn-outline-secondary">إلغاء</a>
+            <button type="submit" class="btn" style="background:linear-gradient(135deg,#e65100,#bf360c);color:#fff">
+              <i class="fas fa-save me-1"></i> تسجيل الإهلاك وإنشاء القيد
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('id_amount')?.addEventListener('input', function() {
+  const v = parseFloat(this.value);
+  const fmt = isNaN(v) ? '—' : v.toLocaleString('ar-SA', {minimumFractionDigits:2}) + ' ر.س';
+  document.getElementById('preview-amount').textContent = fmt;
+  document.getElementById('preview-amount2').textContent = fmt;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}عقود الإيجار{% endblock %}
+{% block page_title %}عقود الإيجار{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex gap-2">
+    {% if expiring_soon %}
+    <span class="badge bg-warning text-dark fs-6">
+      <i class="fas fa-exclamation-triangle me-1"></i>
+      {{ expiring_soon }} عقود تنتهي خلال 30 يوم
+    </span>
+    {% endif %}
+  </div>
+  <a href="{% url 'rental_contract_create' %}" class="btn btn-gold">
+    <i class="fas fa-plus me-1"></i> عقد جديد
+  </a>
+</div>
+
+<!-- فلاتر -->
+<div class="data-card mb-4">
+  <div class="p-3">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="بحث برقم العقد أو العميل...">
+      </div>
+      <div class="col-md-2">
+        <select name="contract_type" class="form-select form-select-sm">
+          <option value="">كل الأنواع</option>
+          <option value="commercial" {% if contract_type == 'commercial' %}selected{% endif %}>تجاري</option>
+          <option value="residential" {% if contract_type == 'residential' %}selected{% endif %}>سكني</option>
+          <option value="industrial" {% if contract_type == 'industrial' %}selected{% endif %}>صناعي</option>
+          <option value="scaffolding" {% if contract_type == 'scaffolding' %}selected{% endif %}>سقالات</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">كل الحالات</option>
+          <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+          <option value="expired" {% if status == 'expired' %}selected{% endif %}>منتهي</option>
+          <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>ملغي</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button type="submit" class="btn btn-gold btn-sm w-100"><i class="fas fa-search"></i></button>
+      </div>
+      <div class="col-md-1">
+        <a href="{% url 'rental_contracts_list' %}" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-times"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-file-contract me-2"></i> عقود الإيجار</h6>
+    <span class="badge bg-info text-dark">{{ contracts.paginator.count }} عقد</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>رقم العقد</th>
+          <th>العميل</th>
+          <th>النوع</th>
+          <th>العين المؤجرة</th>
+          <th>تاريخ البدء</th>
+          <th>تاريخ الانتهاء</th>
+          <th class="text-end">القيمة السنوية (ر.س)</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contract in contracts %}
+        <tr {% if contract.days_until_expiry is not None and contract.days_until_expiry <= 30 and contract.days_until_expiry >= 0 %}style="background:#fff9e6"{% endif %}>
+          <td><strong style="color:var(--accent)">{{ contract.contract_number }}</strong></td>
+          <td>{{ contract.client.name }}</td>
+          <td>
+            <span class="badge 
+              {% if contract.contract_type == 'commercial' %}bg-primary
+              {% elif contract.contract_type == 'residential' %}bg-success
+              {% elif contract.contract_type == 'industrial' %}bg-warning text-dark
+              {% else %}bg-info text-dark{% endif %}">
+              {{ contract.get_contract_type_display }}
+            </span>
+          </td>
+          <td class="small">{{ contract.property_description|truncatechars:30 }}</td>
+          <td>{{ contract.start_date }}</td>
+          <td>
+            {{ contract.end_date }}
+            {% if contract.days_until_expiry is not None and contract.days_until_expiry <= 30 and contract.days_until_expiry >= 0 %}
+            <span class="badge bg-warning text-dark ms-1">{{ contract.days_until_expiry }} يوم</span>
+            {% endif %}
+          </td>
+          <td class="text-end fw-bold">{{ contract.annual_rent|floatformat:2 }}</td>
+          <td>
+            <span class="badge 
+              {% if contract.status == 'active' %}bg-success
+              {% elif contract.status == 'expired' %}bg-danger
+              {% else %}bg-secondary{% endif %}">
+              {{ contract.get_status_display }}
+            </span>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'rental_contract_detail' contract.pk %}" class="btn btn-sm btn-outline-primary" title="عرض">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="{% url 'rental_contract_edit' contract.pk %}" class="btn btn-sm btn-outline-warning" title="تعديل">
+                <i class="fas fa-edit"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-4">
+            <i class="fas fa-file-contract fa-2x mb-2 d-block opacity-25"></i>
+            لا توجد عقود إيجار
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if contracts.has_other_pages %}
+  <div class="p-3 d-flex justify-content-center">
+    <nav><ul class="pagination pagination-sm mb-0">
+      {% if contracts.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ contracts.previous_page_number }}&q={{ q }}">السابق</a></li>{% endif %}
+      <li class="page-item disabled"><span class="page-link">{{ contracts.number }} / {{ contracts.paginator.num_pages }}</span></li>
+      {% if contracts.has_next %}<li class="page-item"><a class="page-link" href="?page={{ contracts.next_page_number }}&q={{ q }}">التالي</a></li>{% endif %}
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}سندات الصرف{% endblock %}
+{% block page_title %}سندات الصرف{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <span class="badge bg-danger fs-6 px-3">إجمالي: {{ total_payments|floatformat:2 }} ر.س</span>
+  </div>
+  <a href="{% url 'payment_create' %}" class="btn btn-gold">
+    <i class="fas fa-plus me-1"></i> سند صرف جديد
+  </a>
+</div>
+
+<!-- فلاتر -->
+<div class="data-card mb-4">
+  <div class="p-3">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="بحث برقم السند أو المستفيد...">
+      </div>
+      <div class="col-md-2">
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <select name="expense_category" class="form-select form-select-sm">
+          <option value="">كل أوجه الصرف</option>
+          {% for cat in expense_categories %}
+          <option value="{{ cat.pk }}" {% if expense_category == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button type="submit" class="btn btn-gold btn-sm w-100"><i class="fas fa-search"></i></button>
+      </div>
+      <div class="col-md-1">
+        <a href="{% url 'payments_list' %}" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-times"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="data-card">
+  <div class="card-header" style="background:linear-gradient(135deg,#b71c1c,#c62828)">
+    <h6><i class="fas fa-money-bill-wave me-2"></i> سندات الصرف</h6>
+    <span class="badge bg-light text-dark">{{ payments.paginator.count }} سند</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>رقم السند</th>
+          <th>التاريخ</th>
+          <th>المستفيد</th>
+          <th>وجه الصرف</th>
+          <th>وسيلة الدفع</th>
+          <th class="text-end">المبلغ (ر.س)</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments %}
+        <tr>
+          <td><strong style="color:var(--accent)">{{ pay.payment_number }}</strong></td>
+          <td>{{ pay.date }}</td>
+          <td>
+            {% if pay.supplier %}{{ pay.supplier.name }}
+            {% elif pay.payee_name %}{{ pay.payee_name }}
+            {% else %}—{% endif %}
+          </td>
+          <td class="small">{{ pay.expense_category.name_ar|default:"—" }}</td>
+          <td>
+            <span class="badge bg-light text-dark">
+              {% if pay.payment_method == 'cash' %}<i class="fas fa-money-bill text-success me-1"></i>نقدي
+              {% elif pay.payment_method == 'bank_transfer' %}<i class="fas fa-university text-primary me-1"></i>تحويل
+              {% elif pay.payment_method == 'check' %}<i class="fas fa-file-alt text-warning me-1"></i>شيك
+              {% else %}{{ pay.payment_method }}{% endif %}
+            </span>
+          </td>
+          <td class="text-end fw-bold" style="color:#f44336">{{ pay.amount|floatformat:2 }}</td>
+          <td>
+            <span class="badge {% if pay.is_accounted %}bg-success{% else %}bg-warning text-dark{% endif %}">
+              {% if pay.is_accounted %}مرحل{% else %}غير مرحل{% endif %}
+            </span>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'payment_detail' pay.pk %}" class="btn btn-sm btn-outline-primary" title="عرض">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="{% url 'payment_print' pay.pk %}" class="btn btn-sm btn-outline-secondary" title="طباعة" target="_blank">
+                <i class="fas fa-print"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-4">
+            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+            لا توجد سندات صرف
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% if payments %}
+      <tfoot style="background:#f8f9fa">
+        <tr>
+          <td colspan="5" class="fw-bold text-center">الإجمالي</td>
+          <td class="text-end fw-bold" style="color:#f44336">{{ total_payments|floatformat:2 }}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+  {% if payments.has_other_pages %}
+  <div class="p-3 d-flex justify-content-center">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if payments.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ payments.previous_page_number }}&q={{ q }}">السابق</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ payments.number }} / {{ payments.paginator.num_pages }}</span></li>
+        {% if payments.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ payments.next_page_number }}&q={{ q }}">التالي</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

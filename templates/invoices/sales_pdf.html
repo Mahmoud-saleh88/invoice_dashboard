@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<style>
+{{ font_css|safe }}
+
+@page {
+  size: A4;
+  margin: 10mm 8mm 18mm 8mm;
+  @bottom-center { content: element(page-footer); }
+}
+
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  direction: rtl;
+  font-size: 9pt;
+  color: #111;
+  background: white;
+  line-height: 1.4;
+}
+
+/* Force font rendering */
+* {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif !important;
+}
+
+/* Footer */
+#page-footer {
+  position: running(page-footer);
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 7.5pt;
+  text-align: center;
+  color: #000000;
+  direction: ltr;
+  background: transparent;
+  border-top: 1px solid #000000;
+  padding-top: 5pt;
+  width: 100%;
+}
+
+/* Header */
+.inv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10pt 8pt 6pt 8pt;
+  gap: 8pt;
+  direction: ltr;
+}
+
+.inv-header .logo img { 
+  height: 60pt; 
+  width: auto; 
+  max-width: 120pt;
+}
+
+.inv-header .title { 
+  text-align: center; 
+  flex: 1; 
+}
+
+.inv-header .title .ar {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 22pt; 
+  font-weight: 700; 
+  color: #000000; 
+  line-height: 1.2;
+}
+
+.inv-header .title .en {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 12pt; 
+  font-weight: 600; 
+  color: #555;
+  margin-top: 3pt;
+  letter-spacing: 1pt;
+}
+
+.inv-header .qr img { 
+  width: 65pt; 
+  height: 65pt; 
+  border: 1px solid #ddd;
+  padding: 3pt;
+}
+
+/* Separator */
+.sep-line {
+  border: none;
+  border-top: 1.5px solid #115545;
+  margin: 0 0 10pt 0;
+}
+
+.body-pad { 
+  padding: 0 4pt 14pt 4pt; 
+}
+
+/* Bill boxes */
+.bill-row {
+  display: flex; 
+  gap: 8pt;
+  margin-bottom: 8pt; 
+  direction: rtl;
+}
+
+.bill-box { 
+  flex: 1; 
+  min-width: 0; 
+}
+
+.bill-hdr {
+  background: #115545;
+  color: white;
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-weight: 700; 
+  font-size: 9pt;
+  padding: 6pt 10pt;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+}
+
+.bill-hdr .hdr-en { 
+  direction: ltr; 
+  color: white; 
+  font-weight: 600;
+}
+
+.bill-body { 
+  background: #f9f9f9; 
+  padding: 8pt 10pt;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+}
+
+.bri {
+  display: flex; 
+  justify-content: space-between;
+  align-items: flex-start; 
+  padding: 3pt 0; 
+  gap: 5pt; 
+  direction: rtl;
+}
+
+.bal {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 8pt; 
+  color: #666;
+  white-space: nowrap; 
+  min-width: 60pt; 
+  text-align: right; 
+  flex-shrink: 0;
+}
+
+.bv {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 8pt; 
+  font-weight: 600;
+  flex: 1; 
+  padding: 0 6pt; 
+  text-align: center; 
+  word-break: break-word;
+}
+
+.bel {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 8pt; 
+  color: #666;
+  white-space: nowrap; 
+  min-width: 45pt; 
+  text-align: left;
+  direction: ltr; 
+  flex-shrink: 0;
+}
+
+.ltrv { 
+  direction: ltr; 
+  text-align: center; 
+}
+
+/* Meta bar */
+.meta-bar { 
+  background: #f9f9f9; 
+  margin-bottom: 10pt; 
+  direction: rtl;
+  border: 1px solid #e0e0e0;
+}
+
+.meta-bar table { 
+  width: 60%; 
+  border-collapse: collapse; 
+  font-size: 8.5pt; 
+}
+
+.mar {
+  padding: 5pt 10pt; 
+  color: #666; 
+  white-space: nowrap;
+  text-align: right; 
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-weight: 600;
+  width: 35%;
+}
+
+.mav {
+  padding: 5pt 10pt; 
+  font-weight: 700; 
+  text-align: center;
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+}
+
+.mae {
+  padding: 5pt 10pt; 
+  color: #666; 
+  white-space: nowrap; 
+  text-align: left;
+  direction: ltr; 
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  width: 35%;
+}
+
+/* Items table */
+.items-tbl {
+  width: 100%; 
+  border-collapse: collapse;
+  direction: rtl; 
+  font-size: 8pt; 
+  margin-bottom: 12pt;
+}
+
+.items-tbl thead tr { 
+  background: #115545; 
+}
+
+.items-tbl thead th {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-weight: 700; 
+  font-size: 8.5pt;
+  color: white;
+  background: #115545;
+  padding: 6pt 4pt;
+  text-align: center; 
+  vertical-align: middle; 
+  border: none;
+}
+
+.items-tbl thead th .th-en { 
+  display: block; 
+  font-size: 7.5pt; 
+  font-weight: 600;
+}
+
+.items-tbl thead th .th-ar { 
+  display: block; 
+  font-size: 7pt; 
+  margin-top: 2pt; 
+  opacity: 0.9;
+}
+
+.items-tbl tbody td {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  padding: 5pt 3pt; 
+  text-align: center;
+  border: none; 
+  border-bottom: 0.5px solid #e0e0e0;
+  vertical-align: middle;
+  background: white;
+}
+
+/* Totals */
+.totals-wrap { 
+  display: flex; 
+  margin-bottom: 12pt; 
+}
+
+.totals-spacer { 
+  width: 40%; 
+}
+
+.totals-box { 
+  width: 60%; 
+}
+
+.totals-tbl {
+  width: 100%; 
+  border-collapse: collapse;
+  font-size: 8.5pt; 
+  direction: rtl;
+}
+
+.totals-tbl td {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  padding: 5pt 8pt;
+  border-bottom: 0.5px solid #e0e0e0;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: white;
+}
+
+.tar { 
+  text-align: right; 
+  font-weight: 600;
+}
+
+.tav { 
+  text-align: center; 
+  font-weight: 700; 
+}
+
+.tae { 
+  text-align: left; 
+  direction: ltr; 
+  font-weight: 600;
+}
+
+.total-row td {
+  background: #115545 !important;
+  color: white !important;
+  font-weight: 700; 
+  border: none;
+  font-size: 9pt;
+}
+
+/* Words */
+.words-tbl {
+  width: 100%; 
+  border-collapse: collapse;
+  background: #f9f9f9; 
+  font-size: 8.5pt;
+  border: 1px solid #e0e0e0;
+}
+
+.words-tbl td {
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  padding: 6pt 10pt; 
+  vertical-align: top;
+}
+
+.words-tbl tr:first-child td { 
+  border-bottom: 0.5px solid #e0e0e0; 
+}
+
+.wlbl { 
+  font-weight: 700; 
+  white-space: nowrap; 
+  width: 22%; 
+  vertical-align: top; 
+  color: #115545;
+}
+
+.wlbl-ar, .wval-ar { 
+  text-align: right; 
+  direction: rtl; 
+}
+
+.wlbl-en, .wval-en { 
+  text-align: right; 
+  direction: rtl; 
+}
+
+/* ZATCA Compliance Note */
+.zatca-note {
+  margin-top: 12pt;
+  padding: 6pt 10pt;
+  background: #e8f5e9;
+  border-right: 3px solid #115545;
+  font-family: 'Cairo', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 7.5pt;
+  color: #2e7d32;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div id="page-footer">
+  {{ inv.company.name }} | 
+  {% spaceless %}
+    {{ inv.company.street_name|default:'' }}
+    {% if inv.company.building_number %}, مبنى {{ inv.company.building_number }}{% endif %}
+    {% if inv.company.district %}, حي {{ inv.company.district }}{% endif %}
+    {% if inv.company.city %}, {{ inv.company.city }}{% endif %}
+    {% if inv.company.postal_code %}، {{ inv.company.postal_code }}{% endif %}
+  {% endspaceless %}
+  | VAT: {{ inv.company.vat_number }}
+  {% if inv.company.cr_number %} | CR: {{ inv.company.cr_number }}{% endif %}
+</div>
+
+<!-- Header -->
+<div class="inv-header">
+  <div class="logo">
+    {% if logo_b64 %}
+      <img src="{{ logo_b64 }}" alt="logo">
+    {% endif %}
+  </div>
+  <div class="title">
+    <div class="ar">فاتورة ضريبية</div>
+    <div class="en">TAX INVOICE</div>
+  </div>
+  <div class="qr">
+    {% if qr_b64 %}
+      <img src="{{ qr_b64 }}" alt="QR Code">
+    {% endif %}
+  </div>
+</div>
+
+<div class="sep-line"></div>
+
+<div class="body-pad">
+
+  <!-- Bill From / Bill To -->
+  <div class="bill-row">
+    <div class="bill-box">
+      <div class="bill-hdr">
+        <span>فاتورة من</span>
+        <span class="hdr-en">Bill From</span>
+      </div>
+      <div class="bill-body">
+        <div class="bri">
+          <span class="bal">الاسم</span>
+          <span class="bv">{{ inv.company.name }}</span>
+          <span class="bel">Name</span>
+        </div>
+        <div class="bri">
+          <span class="bal">العنوان</span>
+          <span class="bv">
+            {{ inv.company.street_name|default:'' }}{% if inv.company.building_number %}, {{ inv.company.building_number }}{% endif %}{% if inv.company.district %}, {{ inv.company.district }}{% endif %}{% if inv.company.city %}, {{ inv.company.city }}{% endif %}{% if inv.company.postal_code %}, {{ inv.company.postal_code }}{% endif %}{% if inv.company.country %}, {{ inv.company.country }}{% else %}, المملكة العربية السعودية{% endif %}
+          </span>
+          <span class="bel">Address</span>
+        </div>
+        <div class="bri">
+          <span class="bal">الرقم الضريبي</span>
+          <span class="bv ltrv">{{ inv.company.vat_number|default:"—" }}</span>
+          <span class="bel">VAT No.</span>
+        </div>
+        {% if inv.company.email %}
+        <div class="bri">
+          <span class="bal">البريد الإلكتروني</span>
+          <span class="bv ltrv">{{ inv.company.email }}</span>
+          <span class="bel">Email</span>
+        </div>
+        {% endif %}
+        {% if inv.company.cr_number %}
+        <div class="bri">
+          <span class="bal">السجل التجاري</span>
+          <span class="bv ltrv">{{ inv.company.cr_number }}</span>
+          <span class="bel">CR No.</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="bill-box">
+      <div class="bill-hdr">
+        <span>فاتورة إلى</span>
+        <span class="hdr-en">Bill To</span>
+      </div>
+      <div class="bill-body">
+        <div class="bri">
+          <span class="bal">الاسم</span>
+          <span class="bv">{{ inv.client.name }}</span>
+          <span class="bel">Name</span>
+        </div>
+        <div class="bri">
+          <span class="bal">العنوان</span>
+            <span class="bv"> 
+              {{ inv.client.street_name|default:'' }}{% if inv.client.building_number %}, {{ inv.client.building_number }}{% endif %}{% if inv.client.district %}, {{ inv.client.district }}{% endif %}{% if inv.client.city %}, {{ inv.client.city }}{% endif %}{% if inv.client.postal_code %}, {{ inv.client.postal_code }}{% endif %}{% if inv.client.country %}, {{ inv.client.country }}{% else %}, المملكة العربية السعودية{% endif %}
+          </span> 
+          <span class="bel">Address</span>
+        </div>
+        <div class="bri">
+          <span class="bal">الرقم الضريبي</span>
+          <span class="bv ltrv">{{ inv.client.vat_number|default:"—" }}</span>
+          <span class="bel">VAT No.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meta Information -->
+  <div class="meta-bar">
+    <table>
+      <tr>
+        <td class="mar">رقم الفاتورة</td>
+        <td class="bv">{{ inv.invoice_number }}</td>
+        <td class="mae">Invoice Number</td>
+      </tr>
+      <tr>
+        <td class="mar">تاريخ الفاتورة</td>
+        <td class="bv">{{ inv.date|date:"Y-m-d" }}</td>
+        <td class="mae">Invoice Date</td>
+      </tr>
+      <tr>
+        <td class="mar">تاريخ التوريد</td>
+        <td class="bv">
+          {% if inv.supply_date %}
+             {{ inv.supply_date|date:"Y/m/d" }}
+          {% else %}
+             <span class="text-warning">غير محدد</span>
+          {% endif %}
+        </td>
+        <td class="mae">Supply Date</td>
+      </tr>
+      <tr>
+        <td class="mar">تاريخ الاستحقاق</td>
+        <td class="bv">
+          {% if inv.due_date %}
+             {{ inv.due_date|date:"Y/m/d" }}
+          {% else %}
+             <span class="text-warning">غير محدد</span>
+          {% endif %}
+        </td>
+        <td class="mae">Due Date</td>
+      </tr>
+      <tr>
+        <td class="mar">طريقة الدفع</td>
+        <td class="bv">{{ inv.get_payment_method_display }}</td>
+        <td class="mae">Payment Method</td>
+      </tr>
+      <tr>
+        <td class="mar">تم الإنشاء بواسطة</td>
+        <td class="bv">{{ inv.created_by }}</td>
+        <td class="mae">Created By</td>
+      </tr>
+    </table>
+  </div>
+
+    <!-- 4. Items table -->
+  <table class="items-tbl">
+    <thead>
+      <tr>
+        <th style="width:4%;">#</th>
+        <th style="width:30%;"><span class="th-en">NATURE OF GOODS OR SERVICES</span><span class="th-ar">تفاصيل السلع أو الخدمات</span></th>
+        <th style="width:11%;"><span class="th-en">UNIT PRICE</span><span class="th-ar">سعر الوحدة</span></th>
+        <th style="width:8%;"><span class="th-en">QTY</span><span class="th-ar">الكمية</span></th>
+        <th style="width:14%;"><span class="th-en">TAXABLE AMOUNT</span><span class="th-ar">المبلغ الخاضع للضريبة</span></th>
+        <th style="width:15%;"><span class="th-en">TAX @TAX RATE</span><span class="th-ar">الضريبة@ نسبة الضريبة</span></th>
+        <th style="width:13%;"><span class="th-en">TOTAL</span><span class="th-ar">المجموع</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in item_rows %}
+      <tr>
+        <td>{{ row.idx }}</td>
+        <td style="text-align:right; direction:rtl; padding-right:5pt;">{{ row.description }}</td>
+        <td>{{ row.unit_price }}</td>
+        <td>{{ row.quantity }}</td>
+        <td>{{ row.subtotal }}</td>
+        <td style="direction:ltr;">{{ row.tax }}</td>
+        <td>{{ row.total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" style="text-align:center;color:#999;padding:8pt;">لا توجد بنود</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- 5. Totals -->
+  <div class="totals-wrap">
+    <div class="totals-spacer"></div>
+    <div class="totals-box">
+      <table class="totals-tbl">
+        <tr>
+          <td class="tar">إجمالي القيمة بدون الضريبة</td>
+          <td class="tav">{{ subtotal }}</td>
+          <td class="tae">Subtotal Excl. VAT</td>
+        </tr>
+        <tr>
+          <td class="tar">المبلغ خاضع للضريبة</td>
+          <td class="tav">{{ subtotal }}</td>
+          <td class="tae">Taxable Amount</td>
+        </tr>
+        <tr>
+          <td class="tar">إجمالي الضريبة (ر.س)</td>
+          <td class="tav">{{ tax_amount }}</td>
+          <td class="tae">Total VAT (SAR)</td>
+        </tr>
+        <tr class="total-row">
+          <td class="tar">المجموع مع الضريبة (ر.س)</td>
+          <td class="tav">{{ total }}</td>
+          <td class="tae">Total Including VAT (SAR)</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Amount in Words -->
+  <table class="words-tbl">
+    <tr>
+      <td class="wlbl wlbl-ar">المجموع (بالكلمات)</td>
+      <td class="wval-ar">{{ words_ar }}</td>
+    </tr>
+    <tr>
+      <td class="wlbl wlbl-en">Total (in words)</td>
+      <td class="wval-en">{{ words_en }}</td>
+    </tr>
+  </table>
+
+</div>
+</body>
+</html>

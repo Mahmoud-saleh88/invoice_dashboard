@@ -1,0 +1,377 @@
+<!-- templates/invoices/chart_of_accounts.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}دليل الحسابات{% endblock %}
+{% block page_title %}دليل الحسابات - شجرة الحسابات{% endblock %}
+
+{% block extra_css %}
+<style>
+/* الفئات الرئيسية - ألوان مختلفة للتمييز */
+.category-01 .category-header { background: #1a237e !important; }  /* الأصول - أزرق غامق */
+.category-02 .category-header { background: #b71c1c !important; }  /* الالتزامات - أحمر */
+.category-03 .category-header { background: #1b5e20 !important; }  /* حقوق الملكية - أخضر */
+.category-04 .category-header { background: #e65100 !important; }  /* الإيرادات - برتقالي */
+.category-05 .category-header { background: #4a148c !important; }  /* المصروفات - بنفسجي */
+
+.category-header {
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
+    color: white !important;
+}
+
+.category-header h5 {
+    margin: 0;
+    font-weight: bold;
+}
+
+.category-header small {
+    color: rgba(255,255,255,0.8) !important;
+}
+
+/* المجموعات - لون موحد (رمادي فاتح) */
+.group-header {
+    padding: 12px 20px;
+    background: #f1f3f5;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    transition: background 0.2s;
+}
+
+.group-header:hover {
+    background: #e9ecef;
+}
+
+.group-header .group-code {
+    font-weight: bold;
+    color: var(--accent);
+    margin-left: 15px;
+}
+
+.group-header .group-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.group-header .badge {
+    background: #6c757d;
+    color: white;
+    font-size: 0.75rem;
+}
+
+.group-content {
+    background: white;
+}
+
+.toggle-icon {
+    transition: transform 0.2s;
+    font-size: 14px;
+    color: #6c757d;
+    margin-left: 10px;
+}
+
+.group-header.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+/* جدول الحسابات */
+.accounts-table {
+    width: 100%;
+    margin: 0;
+}
+
+.accounts-table th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 10px 15px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.accounts-table td {
+    padding: 8px 15px;
+    border-bottom: 1px solid #f1f3f5;
+    vertical-align: middle;
+}
+
+.account-row {
+    transition: background 0.15s;
+}
+
+.account-row:hover {
+    background: #f8f9fa;
+}
+
+.account-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
+.account-name {
+    font-weight: 500;
+}
+
+.account-name .fa-folder {
+    color: #f0ad4e;
+    margin-left: 8px;
+}
+
+.account-name .fa-file {
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+/* مسافة بادئة للحسابات الفرعية */
+.account-row.level-1 td:first-child { padding-right: 35px !important; }
+.account-row.level-2 td:first-child { padding-right: 55px !important; }
+.account-row.level-3 td:first-child { padding-right: 75px !important; }
+.account-row.level-4 td:first-child { padding-right: 95px !important; }
+
+/* شارات النوع */
+.badge-header {
+    background: #fff3cd;
+    color: #856404;
+    font-size: 0.7rem;
+}
+
+.badge-detail {
+    background: #d1ecf1;
+    color: #0c5460;
+    font-size: 0.7rem;
+}
+
+/* أزرار الإجراءات */
+.account-actions {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.account-row:hover .account-actions {
+    opacity: 1;
+}
+
+/* بطاقات الفئات */
+.category-card {
+    margin-bottom: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.category-content {
+    background: white;
+}
+
+/* أزرار التحكم */
+.control-bar {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+/* أزرار الإجراءات - تحديث */
+.account-actions {
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.account-row:hover .account-actions {
+    opacity: 1;
+}
+
+.account-actions .btn-group {
+    gap: 3px;
+}
+
+.account-actions .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.account-actions .btn-outline-info:hover {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+.account-actions .btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.account-actions .btn-outline-success:hover {
+    background-color: #198754;
+    color: white;
+}
+
+/* Tooltip styling */
+.account-actions .btn {
+    position: relative;
+}
+
+/* عرض الأزرار بشكل أفضل على الشاشات الصغيرة */
+@media (max-width: 768px) {
+    .account-actions .btn-group {
+        display: flex;
+        flex-direction: row;
+    }
+    
+    .account-actions .btn {
+        padding: 3px 6px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- شريط التحكم -->
+<div class="control-bar d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{% url 'account_add' %}" class="btn btn-gold">
+            <i class="fas fa-plus me-1"></i>
+            إضافة حساب جديد
+        </a>
+        <a href="{% url 'accounting_dashboard' %}" class="btn btn-outline-secondary ms-2">
+            <i class="fas fa-chart-pie me-1"></i>
+            لوحة المحاسبة
+        </a>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" onclick="expandAll()">
+            <i class="fas fa-expand me-1"></i>
+            توسيع الكل
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="collapseAll()">
+            <i class="fas fa-compress me-1"></i>
+            طي الكل
+        </button>
+    </div>
+</div>
+
+<!-- شجرة الحسابات -->
+{% for category in categories %}
+<div class="category-card category-{{ category.code }}">
+    <!-- رأس الفئة - ملون حسب النوع -->
+    <div class="category-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5>
+                    <i class="fas fa-folder-open me-2"></i>
+                    {{ category.code }} - {{ category.name_ar }}
+                </h5>
+                <small class="text-white-50">{{ category.name_en }}</small>
+            </div>
+            <span class="badge bg-light text-dark px-3 py-2">
+                <i class="fas fa-balance-scale me-1"></i>
+                {{ category.get_normal_balance_display }}
+            </span>
+        </div>
+    </div>
+    
+    <!-- محتوى الفئة -->
+    <div class="category-content">
+        {% for group in category.groups.all %}
+        <div class="group-wrapper">
+            <!-- رأس المجموعة - رمادي موحد -->
+            <div class="group-header" onclick="toggleGroup(this)">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                    <span class="group-code">{{ group.code }}</span>
+                    <span class="group-name">{{ group.name_ar }}</span>
+                    <small class="text-muted ms-3">({{ group.name_en }})</small>
+                </div>
+                <span class="badge">{{ group.get_normal_balance_display }}</span>
+            </div>
+            
+            <!-- جدول حسابات المجموعة -->
+            <div class="group-content">
+                <table class="accounts-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">كود الحساب</th>
+                            <th>اسم الحساب</th>
+                            <th style="width: 150px;">الاسم الإنجليزي</th>
+                            <th style="width: 90px;">النوع</th>
+                            <th style="width: 120px;">الرصيد</th>
+                            <th style="width: 100px;">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in group.accounts.all %}
+                            {% if not account.parent %}
+                                {% include 'invoices/partials/account_row.html' with account=account level=0 %}
+                            {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">
+                                لا توجد حسابات في هذه المجموعة
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-4 text-center text-muted">
+            لا توجد مجموعات في هذه الفئة
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% empty %}
+<div class="alert alert-info text-center py-5">
+    <i class="fas fa-sitemap fa-3x mb-3 opacity-50"></i>
+    <h5>لا توجد حسابات مسجلة</h5>
+    <p>قم بإضافة دليل الحسابات أولاً</p>
+    <a href="{% url 'account_add' %}" class="btn btn-gold mt-2">إضافة حساب</a>
+</div>
+{% endfor %}
+
+<!-- ملخص سريع -->
+<div class="row g-3 mt-4">
+    {% for category in categories %}
+    <div class="col-md-2 col-sm-4">
+        <div class="border rounded p-3 text-center bg-white">
+            <div class="small text-muted mb-2">{{ category.name_ar }}</div>
+            <div class="fs-5 fw-bold">—</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function toggleGroup(header) {
+    header.classList.toggle('collapsed');
+    const content = header.nextElementSibling;
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+    } else {
+        content.style.display = 'none';
+    }
+}
+
+function expandAll() {
+    document.querySelectorAll('.group-header').forEach(h => {
+        h.classList.remove('collapsed');
+        h.nextElementSibling.style.display = 'block';
+    });
+}
+
+function collapseAll() {
+    document.querySelectorAll('.group-header').forEach(h => {
+        h.classList.add('collapsed');
+        h.nextElementSibling.style.display = 'none';
+    });
+}
+</script>
+{% endblock %}

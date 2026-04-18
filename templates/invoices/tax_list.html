@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}الفواتير الضريبية{% endblock %}
+{% block page_title %}الفواتير الضريبية{% endblock %}
+{% block content %}
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-receipt me-2"></i>قائمة الفواتير الضريبية</h6>
+    <a href="{% url 'tax_add' %}" class="btn btn-sm btn-gold"><i class="fas fa-plus me-1"></i>إضافة فاتورة ضريبية</a>
+  </div>
+  <div class="p-3 border-bottom">
+    <form method="get" class="d-flex gap-2">
+      <div class="search-box flex-grow-1">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="بحث بالعميل أو رقم الفاتورة...">
+        <i class="fas fa-search"></i>
+      </div>
+      <button type="submit" class="btn btn-dark-main">بحث</button>
+      {% if q %}<a href="{% url 'tax_list' %}" class="btn btn-outline-secondary">مسح</a>{% endif %}
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>المورد</th>
+          <th>بدون ضريبة</th><th>الضريبة %</th><th>الضريبة</th><th>المجموع مع الضريبة</th><th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for inv in invoices %}
+      <tr>
+        <td><span class="badge-invoice">{{ inv.invoice_number }}</span></td>
+        <td>{{ inv.invoice_date|date:"Y-m-d" }}</td>
+        <td>{{ inv.bill_to_name }}</td>
+        <td>{{ inv.bill_from_name }}</td>
+        <td>{{ inv.subtotal_excl_vat|floatformat:2 }}</td>
+        <td>{{ inv.tax_rate }}%</td>
+        <td style="color:#dc3545;">{{ inv.total_vat|floatformat:2 }}</td>
+        <td><strong style="color:#1a1a2e;">{{ inv.total_including_vat|floatformat:2 }}</strong></td>
+        <td class="d-flex gap-1">
+          <a href="{% url 'tax_detail' inv.pk %}" class="btn btn-sm btn-outline-primary" title="عرض"><i class="fas fa-eye"></i></a>
+          <a href="{% url 'tax_pdf' inv.pk %}" class="btn btn-sm btn-gold" title="تحميل PDF"><i class="fas fa-file-pdf"></i></a>
+          <a href="{% url 'tax_edit' inv.pk %}" class="btn btn-sm btn-outline-warning" title="تعديل"><i class="fas fa-edit"></i></a>
+          <a href="{% url 'tax_delete' inv.pk %}" class="btn btn-sm btn-outline-danger" title="حذف"><i class="fas fa-trash"></i></a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="text-center text-muted py-4">لا توجد فواتير ضريبية</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% block title %}إعداد زاتكا{% endblock %}
+{% block page_title %}إعداد تكامل زاتكا — ZATCA Phase 2{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Status Card -->
+  <div class="col-12">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-shield-alt me-2"></i> حالة تكامل زاتكا</h6>
+        <span class="badge" style="background:{% if devices %}rgba(29,158,117,.2);color:#1D9E75{% else %}rgba(226,75,74,.2);color:#E24B4A{% endif %}">
+          {% if devices %}مُفعَّل{% else %}غير مُفعَّل{% endif %}
+        </span>
+      </div>
+      <div class="p-4">
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="stat-card text-center">
+              <div class="icon-box mx-auto" style="background:rgba(201,168,76,.15)">
+                <i class="fas fa-building" style="color:var(--accent)"></i>
+              </div>
+              <div class="label">الشركة</div>
+              <div class="value" style="font-size:1rem">{{ company.name|default:"غير محدد" }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card text-center">
+              <div class="icon-box mx-auto" style="background:rgba(29,158,117,.15)">
+                <i class="fas fa-certificate" style="color:#1D9E75"></i>
+              </div>
+              <div class="label">الأجهزة المسجلة</div>
+              <div class="value">{{ devices|length }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card text-center">
+              <div class="icon-box mx-auto" style="background:rgba(56,138,221,.15)">
+                <i class="fas fa-file-invoice" style="color:#378ADD"></i>
+              </div>
+              <div class="label">الرقم الضريبي</div>
+              <div class="value" style="font-size:1rem;direction:ltr">{{ company.vat_number|default:"—" }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Company address check -->
+        {% if company %}
+        <div class="alert {% if company.street_name and company.building_number and company.city and company.postal_code and company.district %}alert-success{% else %}alert-danger{% endif %} mb-3" style="border-radius:10px;font-size:.88rem">
+          {% if company.street_name and company.building_number and company.city and company.postal_code and company.district %}
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>بيانات الشركة مكتملة</strong> — جاهزة للتسجيل في زاتكا
+          {% else %}
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>بيانات الشركة ناقصة!</strong> — يجب إكمال هذه الحقول في الإدارة قبل التسجيل:
+            {% if not company.street_name %}<span class="badge bg-danger me-1">اسم الشارع</span>{% endif %}
+            {% if not company.building_number %}<span class="badge bg-danger me-1">رقم المبنى</span>{% endif %}
+            {% if not company.district %}<span class="badge bg-danger me-1">الحي</span>{% endif %}
+            {% if not company.city %}<span class="badge bg-danger me-1">المدينة</span>{% endif %}
+            {% if not company.postal_code %}<span class="badge bg-danger me-1">الرمز البريدي</span>{% endif %}
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- ZATCA Flow Steps -->
+        <div class="alert" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:12px">
+          <h6 class="mb-3" style="color:var(--accent)"><i class="fas fa-info-circle me-2"></i>خطوات التكامل مع زاتكا (المرحلة الثانية)</h6>
+          <div class="row g-2 text-center">
+            <div class="col text-center py-2">
+              <div style="background:rgba(201,168,76,.15);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700;color:var(--accent)">1</div>
+              <small>توليد CSR<br>من SDK زاتكا</small>
+            </div>
+            <div class="col text-center py-2" style="border-right:1px dashed rgba(201,168,76,.3)">
+              <div style="background:rgba(201,168,76,.15);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700;color:var(--accent)">2</div>
+              <small>الحصول على<br>OTP من<br>بوابة فاتورة</small>
+            </div>
+            <div class="col text-center py-2" style="border-right:1px dashed rgba(201,168,76,.3)">
+              <div style="background:rgba(201,168,76,.15);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700;color:var(--accent)">3</div>
+              <small>تسجيل الجهاز<br>باستخدام النموذج</small>
+            </div>
+            <div class="col text-center py-2" style="border-right:1px dashed rgba(201,168,76,.3)">
+              <div style="background:rgba(201,168,76,.15);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700;color:var(--accent)">4</div>
+              <small>فحوصات<br>الامتثال</small>
+            </div>
+            <div class="col text-center py-2" style="border-right:1px dashed rgba(201,168,76,.3)">
+              <div style="background:rgba(201,168,76,.15);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700;color:var(--accent)">5</div>
+              <small>إرسال الفواتير<br>للتخليص</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onboarding Form -->
+  <div class="col-md-6">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-plus-circle me-2"></i> تسجيل جهاز جديد</h6>
+      </div>
+      <div class="p-4">
+
+        <div class="alert alert-warning mb-3" style="border-radius:10px;font-size:.88rem">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>ملاحظة مهمة:</strong> الـ OTP صالح لمدة ساعة واحدة فقط من بوابة فاتورة.
+          للمحاكاة والإنتاج، يجب رفع ملفات CSR والمفتاح الخاص المُولَّدة من SDK زاتكا.
+        </div>
+
+        <div class="alert alert-info mb-3" style="border-radius:10px;font-size:.85rem;background:rgba(56,138,221,.08);border:1px solid rgba(56,138,221,.3);color:#185FA5">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>للإنتاج:</strong> سجّل دخولك على
+          <a href="https://fatoora.zatca.gov.sa" target="_blank" style="color:#185FA5">fatoora.zatca.gov.sa</a>،
+          أضف جهازاً جديداً، احصل على OTP، ثم أدخله هنا مع ملفات CSR والمفتاح.
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="onboardingForm">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">اسم الجهاز <span class="text-danger">*</span></label>
+            <input type="text" name="device_name" class="form-control"
+                   value="EGS-001" placeholder="مثال: EGS-001" required>
+            <small class="text-muted">اسم مميز للجهاز — لا تكرر الاسم مع أجهزة أخرى</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">البيئة <span class="text-danger">*</span></label>
+            <select name="environment" class="form-select" id="environmentSelect"
+                    onchange="toggleFields()">
+              {% for val, label in environments %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3" id="otpField">
+            <label class="form-label fw-bold">OTP <span class="text-danger">*</span></label>
+            <input type="text" name="otp" class="form-control text-center"
+                   maxlength="6" placeholder="XXXXXX"
+                   style="letter-spacing:8px;font-size:1.4rem;font-weight:700">
+            <small class="text-muted">6 أرقام من بوابة فاتورة — لا يلزم لـ Sandbox</small>
+          </div>
+
+          <!-- CSR & Key Section — shown for simulation and production -->
+          <div id="csrSection">
+            <hr class="my-3">
+            <p class="fw-bold mb-3" style="color:var(--accent)">
+              <i class="fas fa-key me-2"></i>ملفات CSR والمفتاح الخاص
+            </p>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">رفع ملف CSR (.pem)</label>
+              <input type="file" name="csr_file" class="form-control" accept=".pem,.csr">
+              <small class="text-muted">الملف المُولَّد من SDK زاتكا بأمر: <code>fatoora -csr</code></small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">رفع ملف المفتاح الخاص (.pem)</label>
+              <input type="file" name="key_file" class="form-control" accept=".pem">
+              <small class="text-muted">المفتاح المقابل للـ CSR</small>
+            </div>
+
+            <div class="alert" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:8px;font-size:.82rem">
+              <i class="fas fa-terminal me-2" style="color:var(--accent)"></i>
+              <strong>لتوليد CSR من SDK:</strong><br>
+              <code style="display:block;margin-top:6px;direction:ltr;text-align:left">
+                cd zatca_sdk\zatca-einvoicing-sdk-Java-238-R3.4.8<br>
+                fatoora.bat -csr -csrConfig Apps\config4.properties -privateKey Apps\prod_key.pem -generatedCsr Apps\prod_csr.pem
+              </code>
+            </div>
+
+            <details class="mb-3">
+              <summary class="text-muted small" style="cursor:pointer">أو أدخل النص مباشرة (بديل عن رفع الملفات)</summary>
+              <div class="mt-2">
+                <textarea name="csr_pem" class="form-control mb-2" rows="4"
+                  placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;...&#10;-----END CERTIFICATE REQUEST-----"
+                  style="font-family:monospace;font-size:.8rem;direction:ltr"></textarea>
+                <textarea name="private_key_pem" class="form-control" rows="4"
+                  placeholder="-----BEGIN EC PRIVATE KEY-----&#10;...&#10;-----END EC PRIVATE KEY-----"
+                  style="font-family:monospace;font-size:.8rem;direction:ltr"></textarea>
+              </div>
+            </details>
+          </div>
+
+          <button type="submit" class="btn btn-gold w-100 mt-2" id="submitBtn">
+            <i class="fas fa-satellite-dish me-2"></i>تسجيل الجهاز
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registered Devices -->
+  <div class="col-md-6">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-server me-2"></i> الأجهزة المسجلة</h6>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>الاسم</th>
+              <th>البيئة</th>
+              <th>الحالة</th>
+              <th>تاريخ التسجيل</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for device in devices %}
+            <tr>
+              <td>
+                <strong>{{ device.device_name }}</strong><br>
+                <small class="text-muted" style="font-family:monospace;font-size:.7rem">
+                  {{ device.serial_number|truncatechars:35 }}
+                </small>
+              </td>
+              <td>
+                <span class="badge" style="
+                  background:{% if device.environment == 'production' %}rgba(29,158,117,.2);color:#1D9E75
+                  {% elif device.environment == 'sandbox' %}rgba(201,168,76,.2);color:#C9A84C
+                  {% else %}rgba(56,138,221,.2);color:#378ADD{% endif %}">
+                  {{ device.get_environment_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background:{% if device.is_active %}rgba(29,158,117,.2);color:#1D9E75{% else %}rgba(226,75,74,.2);color:#E24B4A{% endif %}">
+                  {% if device.is_active %}نشط{% else %}معطَّل{% endif %}
+                </span>
+              </td>
+              <td>
+                <small>{{ device.registered_at|date:"Y-m-d H:i"|default:"—" }}</small>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-4">
+                <i class="fas fa-server fa-2x mb-2 d-block opacity-25"></i>
+                لا توجد أجهزة مسجلة بعد
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="data-card mt-3">
+      <div class="card-header">
+        <h6><i class="fas fa-bolt me-2"></i> إجراءات سريعة</h6>
+      </div>
+      <div class="p-3 d-flex flex-column gap-2">
+        <a href="{% url 'zatca_bulk_submit' %}" class="btn btn-warning">
+          <i class="fas fa-paper-plane me-2"></i>إرسال جميع الفواتير المعلقة
+        </a>
+        <a href="{% url 'zatca_logs' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-history me-2"></i>عرض سجلات الإرسال
+        </a>
+        <a href="{% url 'sales_list' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-file-invoice me-2"></i>قائمة الفواتير
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent ZATCA Logs -->
+  <div class="col-12">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-history me-2"></i> آخر سجلات زاتكا</h6>
+        <a href="{% url 'zatca_logs' %}" class="btn btn-sm btn-gold">عرض الكل</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>الوقت</th>
+              <th>الإجراء</th>
+              <th>الفاتورة</th>
+              <th>كود HTTP</th>
+              <th>الحالة</th>
+              <th>التفاصيل</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+            <tr>
+              <td><small>{{ log.created_at|date:"Y-m-d H:i" }}</small></td>
+              <td><span class="badge" style="background:rgba(56,138,221,.15);color:#378ADD">{{ log.get_action_display }}</span></td>
+              <td>
+                {% if log.sales_invoice %}
+                <a href="{% url 'sales_detail' log.sales_invoice.pk %}">
+                  {{ log.sales_invoice.invoice_number }}
+                </a>
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                <code style="font-size:.8rem;color:{% if log.response_code == 200 or log.response_code == 202 %}#1D9E75{% elif log.response_code == 401 %}#E24B4A{% else %}#C9A84C{% endif %}">
+                  {{ log.response_code|default:"—" }}
+                </code>
+              </td>
+              <td>
+                {% if log.success %}
+                  <span class="badge" style="background:rgba(29,158,117,.2);color:#1D9E75">✓ نجاح</span>
+                {% else %}
+                  <span class="badge" style="background:rgba(226,75,74,.2);color:#E24B4A">✗ فشل</span>
+                {% endif %}
+              </td>
+              <td><small class="text-danger">{{ log.error_message|truncatechars:80 }}</small></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-3">لا توجد سجلات</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleFields() {
+    const env = document.getElementById('environmentSelect').value;
+    const csrSection = document.getElementById('csrSection');
+    const otpField   = document.getElementById('otpField');
+
+    if (env === 'sandbox') {
+        csrSection.style.display = 'none';
+        otpField.style.display   = 'none';
+    } else {
+        csrSection.style.display = 'block';
+        otpField.style.display   = 'block';
+    }
+}
+
+document.getElementById('onboardingForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري التسجيل...';
+});
+
+toggleFields();
+</script>
+{% endblock %}

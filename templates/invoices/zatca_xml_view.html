@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}XML — {{ invoice.invoice_number }}{% endblock %}
+{% block page_title %}عرض XML — {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-code me-2"></i>XML الفاتورة {{ invoice.invoice_number }}</h6>
+    <div class="d-flex gap-2">
+      <a href="{% url 'export_invoice_xml' invoice.pk %}" class="btn btn-sm btn-gold">
+        <i class="fas fa-download me-1"></i>تحميل XML
+      </a>
+      <a href="{% url 'sales_detail' invoice.pk %}" class="btn btn-sm btn-outline-light">
+        <i class="fas fa-arrow-right me-1"></i>عودة
+      </a>
+    </div>
+  </div>
+  <div class="p-3">
+    <pre style="background:#1a1a2e; color:#C9A84C; padding:1.5rem;
+                border-radius:8px; font-size:0.78rem; overflow-x:auto;
+                max-height:75vh; overflow-y:auto; direction:ltr; text-align:left;">{{ xml_content }}</pre>
+  </div>
+</div>
+{% endblock %}

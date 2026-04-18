@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}اختبار QR Code{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5>اختبار QR Code - الفاتورة: {{ invoice.invoice_number }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if validation_passed %}
+                        <div class="alert alert-success">
+                            ✅ التحقق ناجح - QR Code متوافق مع متطلبات ZATCA
+                        </div>
+                        
+                        <div class="text-center">
+                            <img src="data:image/png;base64,{{ qr_image }}" 
+                                 alt="QR Code" 
+                                 style="border: 1px solid #ddd; padding: 10px;">
+                        </div>
+                        
+                        <div class="mt-3">
+                            <label>بيانات QR (Base64):</label>
+                            <textarea class="form-control" rows="3" readonly>{{ qr_data }}</textarea>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <label>تفاصيل التحقق:</label>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    ✅ اسم البائع: {{ invoice.company.name }}
+                                </li>
+                                <li class="list-group-item">
+                                    ✅ الرقم الضريبي: {{ invoice.company.vat_number }}
+                                </li>
+                                <li class="list-group-item">
+                                    ✅ إجمالي الفاتورة: {{ invoice.total }}
+                                </li>
+                                <li class="list-group-item">
+                                    ✅ قيمة الضريبة: {{ invoice.total_tax }}
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            ❌ فشل التحقق: {{ validation_errors }}
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h6>المشاكل التي تم اكتشافها:</h6>
+                            <ul>
+                                {% if not invoice.company.name %}
+                                    <li>اسم الشركة غير موجود</li>
+                                {% endif %}
+                                {% if invoice.company.vat_number|length != 15 %}
+                                    <li>الرقم الضريبي يجب أن يكون 15 رقماً (الطول الحالي: {{ invoice.company.vat_number|length }})</li>
+                                {% endif %}
+                                {% if invoice.total <= 0 %}
+                                    <li>إجمالي الفاتورة يجب أن يكون أكبر من صفر</li>
+                                {% endif %}
+                                {% if invoice.total_tax <= 0 %}
+                                    <li>قيمة الضريبة يجب أن تكون أكبر من صفر</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'sales_detail' invoice.pk %}" class="btn btn-secondary">
+                        العودة للفاتورة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}{{ asset.name }}{% endblock %}
+{% block page_title %}تفاصيل الأصل الثابت{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 class="mb-1">{{ asset.name }}</h5>
+    <span class="badge bg-primary">{{ asset.get_asset_type_display }}</span>
+    {% if asset.asset_number %}<span class="badge bg-secondary ms-1">{{ asset.asset_number }}</span>{% endif %}
+    <span class="badge {% if asset.is_active %}bg-success{% else %}bg-danger{% endif %} ms-1">
+      {% if asset.is_active %}نشط{% else %}مُستبعد{% endif %}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'fixed_assets_list' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-right me-1"></i> رجوع
+    </a>
+    <a href="{% url 'fixed_asset_depreciate' asset.pk %}" class="btn btn-outline-warning">
+      <i class="fas fa-chart-line me-1"></i> تسجيل إهلاك
+    </a>
+  </div>
+</div>
+
+<!-- إحصائيات القيمة -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">التكلفة الأصلية</div>
+      <div class="value">{{ asset.cost|floatformat:2 }}</div>
+      <div class="small text-muted">ريال سعودي</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">مجمع الإهلاك</div>
+      <div class="value text-warning">{{ asset.accumulated_depreciation|floatformat:2 }}</div>
+      <div class="small text-muted">ريال سعودي</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">صافي القيمة الدفترية</div>
+      <div class="value" style="color:var(--accent)">{{ asset.book_value|floatformat:2 }}</div>
+      <div class="small text-muted">ريال سعودي</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card text-center">
+      <div class="label text-muted">نسبة الإهلاك</div>
+      <div class="value fs-4">{{ asset.depreciation_rate|floatformat:1 }}%</div>
+      <div class="small text-muted">سنوياً</div>
+    </div>
+  </div>
+</div>
+
+<!-- شريط تقدم الإهلاك -->
+<div class="data-card mb-4">
+  <div class="p-3">
+    <div class="d-flex justify-content-between mb-2">
+      <span class="small fw-bold">نسبة الإهلاك المتراكم</span>
+      <span class="small fw-bold">{{ depreciation_pct|floatformat:1 }}%</span>
+    </div>
+    <div class="progress" style="height:12px;border-radius:6px">
+      <div class="progress-bar bg-warning" style="width:{{ depreciation_pct }}%"></div>
+    </div>
+    <div class="d-flex justify-content-between mt-1">
+      <small class="text-muted">{{ asset.purchase_date }}</small>
+      <small class="text-muted">عمر إنتاجي: {{ asset.useful_life_years }} سنة</small>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- معلومات تفصيلية -->
+  <div class="col-md-6">
+    <div class="data-card h-100">
+      <div class="card-header"><h6><i class="fas fa-info-circle me-2"></i> معلومات الأصل</h6></div>
+      <div class="p-3">
+        <table class="table table-borderless table-sm mb-0">
+          <tr><th width="40%" class="text-muted">تاريخ الشراء</th><td>{{ asset.purchase_date }}</td></tr>
+          <tr><th class="text-muted">طريقة الإهلاك</th><td>{{ asset.get_depreciation_method_display }}</td></tr>
+          <tr><th class="text-muted">العمر الإنتاجي</th><td>{{ asset.useful_life_years }} سنة</td></tr>
+          <tr><th class="text-muted">القيمة التخريدية</th><td>{{ asset.salvage_value|floatformat:2 }} ر.س</td></tr>
+          <tr><th class="text-muted">الموقع</th><td>{{ asset.location|default:"—" }}</td></tr>
+          <tr><th class="text-muted">المورد</th><td>{{ asset.supplier.name|default:"—" }}</td></tr>
+          <tr><th class="text-muted">رقم فاتورة الشراء</th><td>{{ asset.purchase_invoice_number|default:"—" }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- الحسابات المرتبطة -->
+  <div class="col-md-6">
+    <div class="data-card h-100">
+      <div class="card-header"><h6><i class="fas fa-book me-2"></i> الحسابات المرتبطة</h6></div>
+      <div class="p-3">
+        <table class="table table-borderless table-sm mb-0">
+          <tr>
+            <th class="text-muted">حساب الأصل</th>
+            <td>
+              {% if asset.asset_account %}
+              <code>{{ asset.asset_account.code }}</code> {{ asset.asset_account.name_ar }}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th class="text-muted">حساب مجمع الإهلاك</th>
+            <td>
+              {% if asset.depreciation_account %}
+              <code>{{ asset.depreciation_account.code }}</code> {{ asset.depreciation_account.name_ar }}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th class="text-muted">الإهلاك السنوي</th>
+            <td class="fw-bold text-danger">{{ annual_depreciation|floatformat:2 }} ر.س</td>
+          </tr>
+          <tr>
+            <th class="text-muted">الإهلاك الشهري</th>
+            <td class="text-warning">{{ monthly_depreciation|floatformat:2 }} ر.س</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- سجل الإهلاك -->
+<div class="data-card mt-4">
+  <div class="card-header">
+    <h6><i class="fas fa-history me-2"></i> سجل قيود الإهلاك</h6>
+    <span class="badge bg-info text-dark">{{ depreciation_entries|length }} قيد</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover table-sm mb-0">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>الفترة</th>
+          <th class="text-end">مبلغ الإهلاك (ر.س)</th>
+          <th class="text-end">مجمع الإهلاك (ر.س)</th>
+          <th class="text-end">القيمة الدفترية (ر.س)</th>
+          <th>القيد المحاسبي</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in depreciation_entries %}
+        <tr>
+          <td>{{ entry.date }}</td>
+          <td class="small text-muted">{{ entry.period_description|default:"—" }}</td>
+          <td class="text-end text-danger">{{ entry.amount|floatformat:2 }}</td>
+          <td class="text-end text-warning">{{ entry.accumulated_after|floatformat:2 }}</td>
+          <td class="text-end fw-bold" style="color:var(--accent)">{{ entry.book_value_after|floatformat:2 }}</td>
+          <td>
+            {% if entry.journal_entry %}
+            <a href="{% url 'journal_entry_detail' entry.journal_entry.pk %}" class="small" style="color:var(--accent)">
+              {{ entry.journal_entry.entry_number }}
+            </a>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-3">لم يُسجل إهلاك بعد</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

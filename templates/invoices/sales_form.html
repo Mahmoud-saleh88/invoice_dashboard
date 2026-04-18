@@ -1,0 +1,489 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="data-card" style="max-width: 1200px; margin: auto;">
+  <div class="card-header">
+    <h6><i class="fas fa-file-alt me-2"></i>{{ title }}</h6>
+    <a href="{% url back_url %}" class="btn btn-sm btn-outline-light"><i class="fas fa-arrow-right me-1"></i>عودة</a>
+  </div>
+  <div class="p-4">
+    <form method="post" id="invoice-form">
+      {% csrf_token %}
+      
+      <!-- Invoice Information - Only show specific fields -->
+    <div class="row g-3 mb-4">
+ 
+  {# ── Row 1: Invoice Number + Issue Date ── #}
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-hashtag me-1 text-warning"></i>رقم الفاتورة
+    </label>
+    {% for field in form %}
+      {% if field.name == 'invoice_number' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-calendar me-1 text-warning"></i>تاريخ الفاتورة
+    </label>
+    {% for field in form %}
+      {% if field.name == 'date' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+  {# ── Row 2: Supply Date (ZATCA) + Due Date ── #}
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-truck me-1 text-info"></i>
+      تاريخ التوريد
+      <span class="badge bg-danger ms-1" style="font-size:0.65rem;">مطلوب زاتكا</span>
+    </label>
+    {% for field in form %}
+      {% if field.name == 'supply_date' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+    <small class="text-muted">BR-KSA-15 — يجب تحديده للفواتير الضريبية (نوع 388)</small>
+  </div>
+ 
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-calendar-check me-1 text-warning"></i>تاريخ الاستحقاق
+    </label>
+    {% for field in form %}
+      {% if field.name == 'due_date' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+  {# ── Row 3: Transaction Type + Payment Method ── #}
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-file-invoice me-1 text-warning"></i>نوع المعاملة
+    </label>
+    {% for field in form %}
+      {% if field.name == 'transaction_type' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-credit-card me-1 text-warning"></i>طريقة الدفع
+    </label>
+    {% for field in form %}
+      {% if field.name == 'payment_method' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+  {# ── Row 4: Client + Created By ── #}
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-user me-1 text-warning"></i>العميل
+    </label>
+    {% for field in form %}
+      {% if field.name == 'client' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+  <div class="col-md-6">
+    <label class="form-label fw-bold">
+      <i class="fas fa-user-edit me-1 text-warning"></i>أنشأ بواسطة
+    </label>
+    {% for field in form %}
+      {% if field.name == 'created_by' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+  {# ── Notes ── #}
+  <div class="col-md-12">
+    <label class="form-label fw-bold">
+      <i class="fas fa-sticky-note me-1 text-warning"></i>ملاحظات
+    </label>
+    {% for field in form %}
+      {% if field.name == 'notes' %}{% bootstrap_field field show_label=False %}{% endif %}
+    {% endfor %}
+  </div>
+ 
+</div>
+ 
+{# ── Hidden calculated fields (unchanged from original) ── #}
+<div style="display: none;">
+  {% for field in form %}
+    {% if field.name == 'total_sales_excl_tax' or field.name == 'tax_rate' or field.name == 'total_tax' or field.name == 'total' or field.name == 'total_quantity' or field.name == 'discount_amount' or field.name == 'taxable_amount' or field.name == 'amount_paid' %}
+      {% bootstrap_field field %}
+    {% endif %}
+  {% endfor %}
+</div>      
+      <!-- Items Section -->
+      <div class="mt-4">
+        <h6 class="mb-3 fw-bold"><i class="fas fa-list me-2"></i>بنود الفاتورة</h6>
+        
+        {{ formset.management_form }}
+        
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover" id="items-table">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 40%">تفاصيل السلعة أو الخدمة</th>
+                <th style="width: 15%">الكمية</th>
+                <th style="width: 20%">سعر الوحدة (ر.س)</th>
+                <th style="width: 20%">الإجمالي (ر.س)</th>
+                <th style="width: 5%">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="items-container">
+  {% for item_form in formset %}
+    <tr class="item-row" data-item-id="{{ item_form.instance.pk|default:'' }}">
+      <td>
+        {{ item_form.id }}
+        <textarea name="{{ item_form.description.html_name }}"
+                  class="form-control" rows="2"
+                  placeholder="تفاصيل السلعة أو الخدمة">{% if item_form.description.value %}{{ item_form.description.value }}{% endif %}</textarea>
+      </td>
+      <td>
+        <input type="number"
+               name="{{ item_form.quantity.html_name }}"
+               value="{% if item_form.instance.pk %}{{ item_form.instance.quantity|stringformat:'.3f' }}{% else %}1{% endif %}"
+               class="form-control item-quantity" step="0.001" min="0">
+      </td>
+      <td>
+        <input type="number"
+               name="{{ item_form.unit_price.html_name }}"
+               value="{% if item_form.instance.pk %}{{ item_form.instance.unit_price|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+               class="form-control item-unit-price" step="0.01" min="0">
+      </td>
+      <td>
+        <input type="number"
+               class="form-control item-total"
+               value="{% if item_form.instance.pk %}{{ item_form.instance.total|stringformat:'.2f' }}{% else %}0.00{% endif %}"
+               readonly
+               style="background-color:#e9ecef;cursor:not-allowed;">
+      </td>
+      <td class="text-center align-middle">
+        {% if item_form.instance.pk %}
+          <button type="button"
+                  class="btn btn-sm btn-outline-danger delete-item-btn"
+                  data-item-id="{{ item_form.instance.pk }}"
+                  data-delete-url="{% url 'sales_invoice_item_delete' item_form.instance.pk %}">
+            <i class="fas fa-trash"></i>
+          </button>
+        {% else %}
+          <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+            <i class="fas fa-trash"></i>
+          </button>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+</tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4">
+                  <button type="button" class="btn btn-primary" id="add-item">
+                    <i class="fas fa-plus me-2"></i>إضافة بند جديد
+                  </button>
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        
+        <!-- Summary Section - Modern Card -->
+        <div class="row mt-4">
+          <div class="col-md-6 offset-md-6">
+            <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+              <div class="card-body">
+                <h6 class="card-title mb-3 fw-bold text-primary">ملخص الفاتورة</h6>
+                
+                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                  <span class="text-muted">إجمالي المبيعات (بدون ضريبة):</span>
+                  <strong class="h6 mb-0" id="total-sales-excl-tax">0.00</strong>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                  <span class="text-muted">نسبة الضريبة:</span>
+                  <div class="d-flex align-items-center gap-2">
+                    <input type="number" 
+                           id="visible_tax_rate" 
+                           value="{% if form.instance.pk %}{{ form.instance.tax_rate|stringformat:'.2f' }}{% else %}15{% endif %}"
+                           style="width: 80px; text-align: center;" 
+                           class="form-control form-control-sm" 
+                           step="0.01" 
+                           min="0">
+                    <strong class="h6 mb-0">%</strong>
+                  </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                  <span class="text-muted">قيمة الضريبة:</span>
+                  <strong class="h6 mb-0 text-danger" id="total-tax">0.00</strong>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-3 pt-2">
+                  <span class="fw-bold">الإجمالي مع الضريبة:</span>
+                  <span class="h5 mb-0 text-primary fw-bold" id="grand-total">0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-gold px-4">
+          <i class="fas fa-save me-2"></i>حفظ الفاتورة
+        </button>
+        <a href="{% url back_url %}" class="btn btn-outline-secondary px-4">
+          <i class="fas fa-times me-2"></i>إلغاء
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemsContainer = document.getElementById('items-container');
+    const addItemButton  = document.getElementById('add-item');
+    const totalSalesExclTaxSpan = document.getElementById('total-sales-excl-tax');
+    const totalTaxSpan          = document.getElementById('total-tax');
+    const grandTotalSpan        = document.getElementById('grand-total');
+
+    const visibleTaxRateInput = document.getElementById('visible_tax_rate');
+    const hiddenTaxRateInput  = document.querySelector('#id_tax_rate');
+    const totalQuantityField  = document.querySelector('#id_total_quantity');
+    const totalSalesField     = document.querySelector('#id_total_sales_excl_tax');
+    const totalTaxField       = document.querySelector('#id_total_tax');
+    const totalField          = document.querySelector('#id_total');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    function parseNumber(value) {
+      if (value === null || value === undefined || value === '') return 0;
+      // Remove everything except digits, dot, minus
+      const cleaned = String(value).replace(/[^\d.-]/g, '');
+      return parseFloat(cleaned) || 0;
+  }
+
+    function calculateItemTotal(row) {
+        const qty   = parseNumber(row.querySelector('.item-quantity')?.value);
+        const price = parseNumber(row.querySelector('.item-unit-price')?.value);
+        const total = qty * price;
+        const totalInput = row.querySelector('.item-total');
+        if (totalInput) totalInput.value = total.toFixed(2);
+        return { total, qty };
+    }
+
+    function calculateAllTotals() {
+        let totalExcl = 0, totalQty = 0;
+        document.querySelectorAll('.item-row').forEach(row => {
+            const deleteCheckbox = row.querySelector('.delete-checkbox');
+            if (deleteCheckbox && deleteCheckbox.checked) return;
+            const qty   = parseNumber(row.querySelector('.item-quantity')?.value);
+            const price = parseNumber(row.querySelector('.item-unit-price')?.value);
+            totalExcl += qty * price;
+            totalQty  += qty;
+        });
+
+        const taxRate  = parseNumber(visibleTaxRateInput?.value);
+        const totalTax = (totalExcl * taxRate) / 100;
+        const grand    = totalExcl + totalTax;
+
+        totalSalesExclTaxSpan.textContent = totalExcl.toFixed(2);
+        totalTaxSpan.textContent          = totalTax.toFixed(2);
+        grandTotalSpan.textContent        = grand.toFixed(2);
+
+        if (totalQuantityField) totalQuantityField.value = Math.round(totalQty);
+        if (totalSalesField)    totalSalesField.value    = totalExcl.toFixed(2);
+        if (totalTaxField)      totalTaxField.value      = totalTax.toFixed(2);
+        if (totalField)         totalField.value         = grand.toFixed(2);
+        if (hiddenTaxRateInput) hiddenTaxRateInput.value = taxRate;
+    }
+
+    function getNextFormIndex() {
+        return parseInt(document.getElementById('id_items-TOTAL_FORMS').value);
+    }
+
+    function addItemRow() {
+        const idx        = getNextFormIndex();
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+        const newRow     = document.createElement('tr');
+        newRow.className = 'item-row';
+        newRow.innerHTML = `
+            <td>
+                <textarea name="items-${idx}-description" class="form-control" rows="2"
+                          placeholder="تفاصيل السلعة أو الخدمة"></textarea>
+            </td>
+            <td>
+                <input type="number" name="items-${idx}-quantity"
+                       value="1" class="form-control item-quantity" step="1" min="1">
+            </td>
+            <td>
+                <input type="number" name="items-${idx}-unit_price"
+                       value="0.00" class="form-control item-unit-price" step="0.01" min="0">
+            </td>
+            <td>
+                <input type="number" class="form-control item-total"
+                       value="0.00" readonly style="background-color:#e9ecef;cursor:not-allowed;">
+            </td>
+            <td class="text-center align-middle">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>`;
+        itemsContainer.appendChild(newRow);
+        totalForms.value = idx + 1;
+        attachListeners(newRow);
+        calculateAllTotals();
+    }
+
+    function attachListeners(row) {
+        row.querySelector('.item-quantity')?.addEventListener('input', () => {
+            calculateItemTotal(row); calculateAllTotals();
+        });
+        row.querySelector('.item-unit-price')?.addEventListener('input', () => {
+            calculateItemTotal(row); calculateAllTotals();
+        });
+
+        const deleteBtn = row.querySelector('.delete-item-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function() {
+                if (!confirm('هل أنت متأكد من حذف هذا البند؟')) return;
+                const url = this.getAttribute('data-delete-url');
+                const orig = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                fetch(url, {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        row.style.transition = 'opacity 0.3s';
+                        row.style.opacity = '0';
+                        setTimeout(() => { row.remove(); calculateAllTotals(); }, 300);
+                    } else {
+                        alert('خطأ: ' + (data.error || 'غير معروف'));
+                        this.disabled = false; this.innerHTML = orig;
+                    }
+                })
+                .catch(() => { alert('خطأ في الاتصال'); this.disabled = false; this.innerHTML = orig; });
+            });
+        }
+
+        row.querySelector('.remove-item')?.addEventListener('click', function() {
+            if (!confirm('هل أنت متأكد من حذف هذا البند؟')) return;
+            row.style.transition = 'opacity 0.3s';
+            row.style.opacity = '0';
+            setTimeout(() => { row.remove(); calculateAllTotals(); }, 300);
+        });
+    }
+
+    // ── Init: attach listeners and populate totals for existing rows ──
+    // Init
+  document.querySelectorAll('.item-row').forEach(row => {
+      attachListeners(row);
+      // Recalculate total from the server-filled quantity × unit_price
+      // (in case JS-calculated value differs from stored value)
+      const qty   = parseNumber(row.querySelector('.item-quantity')?.value);
+      const price = parseNumber(row.querySelector('.item-unit-price')?.value);
+      const totalInput = row.querySelector('.item-total');
+      if (totalInput && qty > 0 && price > 0) {
+          totalInput.value = (qty * price).toFixed(2);
+      }
+  });
+  calculateAllTotals();
+
+    addItemButton?.addEventListener('click', addItemRow);
+    visibleTaxRateInput?.addEventListener('input', calculateAllTotals);
+});
+</script>
+
+<style>
+  .item-row input, .item-row textarea {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  
+  .item-row .form-control {
+    font-size: 0.9rem;
+  }
+  
+  .item-row .form-control:focus {
+    border-color: #C9A84C;
+    box-shadow: 0 0 0 0.2rem rgba(201, 168, 76, 0.25);
+  }
+  
+  .remove-item, .delete-item-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .remove-item:hover, .delete-item-btn:hover {
+    transform: scale(1.05);
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #C9A84C, #b89638);
+    border-color: #C9A84C;
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #b89638, #a08530);
+    border-color: #b89638;
+  }
+  
+  /* Modern form controls */
+  .form-control, .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #C9A84C;
+    box-shadow: 0 0 0 0.2rem rgba(201, 168, 76, 0.25);
+  }
+  
+  /* Table styling */
+  .table {
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .table thead th {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #C9A84C;
+    font-weight: 700;
+    border: none;
+    padding: 1rem;
+  }
+  
+  .table tbody tr:hover {
+    background-color: rgba(201, 168, 76, 0.05);
+  }
+  
+  /* Form field styling */
+  input[readonly] {
+    background-color: #e9ecef;
+    font-weight: bold;
+    cursor: not-allowed;
+  }
+  
+  /* Tax rate input styling */
+  #visible_tax_rate {
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  /* Disabled inputs styling */
+  input:disabled, textarea:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+  }
+</style>
+{% endblock %}

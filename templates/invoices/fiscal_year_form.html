@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}سنة مالية جديدة{% endblock %}
+{% block page_title %}إنشاء سنة مالية جديدة{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-calendar-plus me-2"></i> سنة مالية جديدة</h6>
+      </div>
+      <div class="p-4">
+
+        {% if not company %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          يجب إضافة بيانات الشركة أولاً قبل إنشاء سنة مالية.
+        </div>
+        {% endif %}
+
+        <form method="POST">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-bold">اسم السنة المالية <span class="text-danger">*</span></label>
+              {{ form.name }}
+              {% if form.name.errors %}
+              <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text">مثال: السنة المالية 2025</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">تاريخ البدء <span class="text-danger">*</span></label>
+              {{ form.start_date }}
+              {% if form.start_date.errors %}
+              <div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">تاريخ الانتهاء <span class="text-danger">*</span></label>
+              {{ form.end_date }}
+              {% if form.end_date.errors %}
+              <div class="text-danger small mt-1">{{ form.end_date.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-3 mb-0 py-2" style="font-size:.85rem">
+            <i class="fas fa-info-circle me-2"></i>
+            عادةً السنة المالية تبدأ في <strong>1 يناير</strong> وتنتهي في <strong>31 ديسمبر</strong>،
+            أو تبدأ في <strong>1 يوليو</strong> وتنتهي في <strong>30 يونيو</strong>.
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{% url 'fiscal_years_list' %}" class="btn btn-outline-secondary">إلغاء</a>
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-save me-1"></i> إنشاء السنة المالية
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

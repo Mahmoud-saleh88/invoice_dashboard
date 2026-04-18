@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}سند الصرف {{ payment.payment_number }}{% endblock %}
+{% block page_title %}تفاصيل سند الصرف{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 style="color:var(--accent)">{{ payment.payment_number }}</h5>
+    <span class="badge {% if payment.is_accounted %}bg-success{% else %}bg-warning text-dark{% endif %}">
+      {% if payment.is_accounted %}مرحل محاسبياً{% else %}غير مرحل{% endif %}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'payments_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-right me-1"></i> رجوع
+    </a>
+    <a href="{% url 'payment_print' payment.pk %}" class="btn btn-outline-primary btn-sm" target="_blank">
+      <i class="fas fa-print me-1"></i> طباعة
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-7">
+    <div class="data-card h-100">
+      <div class="card-header" style="background:linear-gradient(135deg,#b71c1c,#c62828)">
+        <h6><i class="fas fa-money-bill-wave me-2"></i> بيانات سند الصرف</h6>
+      </div>
+      <div class="p-4">
+        <table class="table table-borderless table-sm">
+          <tr><td class="text-muted fw-bold" width="35%">رقم السند</td>
+            <td><strong style="color:var(--accent);font-size:1.1rem">{{ payment.payment_number }}</strong></td></tr>
+          <tr><td class="text-muted fw-bold">التاريخ</td><td>{{ payment.date }}</td></tr>
+          <tr><td class="text-muted fw-bold">المستفيد</td>
+            <td><strong>{% if payment.supplier %}{{ payment.supplier.name }}{% elif payment.payee_name %}{{ payment.payee_name }}{% else %}—{% endif %}</strong></td></tr>
+          <tr><td class="text-muted fw-bold">وجه الصرف</td><td>{{ payment.expense_category.name_ar|default:"—" }}</td></tr>
+          <tr><td class="text-muted fw-bold">البيان</td><td>{{ payment.description }}</td></tr>
+          <tr><td class="text-muted fw-bold">وسيلة الدفع</td>
+            <td>
+              {% if payment.payment_method == 'cash' %}<i class="fas fa-money-bill text-success me-1"></i>نقدي
+              {% elif payment.payment_method == 'bank_transfer' %}<i class="fas fa-university text-primary me-1"></i>تحويل بنكي
+              {% elif payment.payment_method == 'check' %}<i class="fas fa-file-alt text-warning me-1"></i>شيك
+              {% else %}{{ payment.payment_method }}{% endif %}
+            </td></tr>
+          <tr><td class="text-muted fw-bold">الحساب / الصندوق</td><td>{{ payment.cash_account.name|default:"—" }}</td></tr>
+          {% if payment.reference_number %}<tr><td class="text-muted fw-bold">المرجع</td><td>{{ payment.reference_number }}</td></tr>{% endif %}
+          {% if payment.notes %}<tr><td class="text-muted fw-bold">ملاحظات</td><td>{{ payment.notes }}</td></tr>{% endif %}
+          <tr><td class="text-muted fw-bold">أُنشئ بواسطة</td><td>{{ payment.created_by.get_full_name|default:payment.created_by.username|default:"—" }}</td></tr>
+          <tr><td class="text-muted fw-bold">تاريخ الإنشاء</td><td>{{ payment.created_at|date:"Y-m-d H:i" }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="data-card mb-3" style="border:2px solid #f44336">
+      <div class="p-4 text-center">
+        <div class="small text-muted mb-1">المبلغ المصروف</div>
+        <div style="font-size:2.5rem;font-weight:900;color:#b71c1c">{{ payment.amount|floatformat:2 }}</div>
+        <div class="fw-bold text-muted">ريال سعودي</div>
+      </div>
+    </div>
+
+    {% if payment.journal_entry %}
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-link me-2"></i> القيد المحاسبي</h6>
+      </div>
+      <div class="p-3">
+        <a href="{% url 'journal_entry_detail' payment.journal_entry.pk %}" class="btn btn-outline-primary w-100">
+          <i class="fas fa-file-alt me-1"></i>
+          {{ payment.journal_entry.entry_number }}
+        </a>
+      </div>
+    </div>
+    {% else %}
+    <div class="data-card">
+      <div class="p-3 text-center text-muted">
+        <i class="fas fa-unlink fa-2x mb-2 d-block opacity-25"></i>
+        لم يُرحَّل بعد
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

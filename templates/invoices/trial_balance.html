@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}ميزان المراجعة{% endblock %}
+{% block page_title %}ميزان المراجعة{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  #sidebar, .topbar, .filter-section, .no-print { display:none!important; }
+  #main-content { margin:0!important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- فلاتر -->
+<div class="data-card mb-4 filter-section">
+  <div class="card-header">
+    <h6><i class="fas fa-filter me-2"></i> معايير التقرير</h6>
+    <div class="d-flex gap-2 no-print">
+      <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}"
+         class="btn btn-sm btn-outline-success">
+        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+      </a>
+      <button onclick="window.print()" class="btn btn-sm btn-outline-light">
+        <i class="fas fa-print"></i>
+      </button>
+    </div>
+  </div>
+  <div class="p-3">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">من تاريخ</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">إلى تاريخ</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-gold">
+          <i class="fas fa-search me-1"></i> عرض
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- الجدول -->
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-balance-scale me-2"></i> ميزان المراجعة</h6>
+    <div class="d-flex gap-2 align-items-center no-print">
+      {% if is_balanced %}
+      <span class="badge bg-success fs-6">✓ الميزان متوازن</span>
+      {% else %}
+      <span class="badge bg-danger fs-6">✗ غير متوازن</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="p-2 text-center">
+    <h5 class="fw-bold mb-0">ميزان المراجعة</h5>
+    <small class="text-muted">من {{ date_from }} إلى {{ date_to }}</small>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover table-sm mb-0" style="font-size:.84rem">
+      <thead>
+        <tr class="text-center" style="background:var(--primary)">
+          <th rowspan="2" style="color:var(--accent);vertical-align:middle;width:100px">كود الحساب</th>
+          <th rowspan="2" style="color:var(--accent);vertical-align:middle">اسم الحساب</th>
+          <th rowspan="2" style="color:var(--accent);vertical-align:middle;width:110px">الفئة</th>
+          <th colspan="2" style="color:#4CAF50">حركات الفترة</th>
+          <th colspan="2" style="color:var(--accent)">الأرصدة الختامية</th>
+        </tr>
+        <tr class="text-center" style="background:var(--secondary)">
+          <th style="color:#4CAF50;width:110px">مدين (ر.س)</th>
+          <th style="color:#f44336;width:110px">دائن (ر.س)</th>
+          <th style="color:#4CAF50;width:110px">مدين (ر.س)</th>
+          <th style="color:#f44336;width:110px">دائن (ر.س)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="text-center">
+            {% if row.account_pk %}
+              <a href="{% url 'account_statement' row.account_pk %}?date_from={{ date_from }}&date_to={{ date_to }}"
+                 class="text-decoration-none no-print" style="color:var(--accent)" title="كشف الحساب">
+                <code>{{ row.code }}</code>
+              </a>
+            {% else %}
+              <code>{{ row.code }}</code>
+            {% endif %}
+          </td>
+          <td>{{ row.name }}</td>
+          <td class="text-center text-muted small">{{ row.category }}</td>
+          <td class="text-end text-success fw-bold">
+            {% if row.dr_move %}{{ row.dr_move|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end text-danger fw-bold">
+            {% if row.cr_move %}{{ row.cr_move|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end fw-bold" style="color:#1B5E20">
+            {% if row.bal_dr %}{{ row.bal_dr|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end fw-bold" style="color:#B71C1C">
+            {% if row.bal_cr %}{{ row.bal_cr|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+            لا توجد حركات في الفترة المحددة
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="fw-bold" style="background:var(--primary)">
+          <td colspan="3" class="text-center" style="color:var(--accent)">الإجمالي الكلي</td>
+          <td class="text-end" style="color:#4CAF50">{{ total_debit_move|floatformat:2 }}</td>
+          <td class="text-end" style="color:#f44336">{{ total_credit_move|floatformat:2 }}</td>
+          <td class="text-end" style="color:#4CAF50">{{ total_debit_bal|floatformat:2 }}</td>
+          <td class="text-end" style="color:#f44336">{{ total_credit_bal|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="p-3">
+    {% if is_balanced %}
+    <div class="alert alert-success mb-0">
+      <i class="fas fa-check-circle me-2"></i>
+      الميزان متوازن — مجموع المدين = مجموع الدائن = {{ total_debit_bal|floatformat:2 }} ر.س ✓
+    </div>
+    {% else %}
+    <div class="alert alert-danger mb-0">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      تحذير: الميزان غير متوازن — الفرق:
+      <strong>{{ total_debit_bal|floatformat:2 }} - {{ total_credit_bal|floatformat:2 }}</strong> ر.س
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

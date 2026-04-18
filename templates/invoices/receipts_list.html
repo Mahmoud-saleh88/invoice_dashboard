@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}سندات القبض{% endblock %}
+{% block page_title %}سندات القبض{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <span class="badge bg-success fs-6 px-3">إجمالي: {{ total_receipts|floatformat:2 }} ر.س</span>
+  </div>
+  <a href="{% url 'receipt_create' %}" class="btn btn-gold">
+    <i class="fas fa-plus me-1"></i> سند قبض جديد
+  </a>
+</div>
+
+<!-- فلاتر -->
+<div class="data-card mb-4">
+  <div class="p-3">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="بحث برقم السند أو العميل...">
+      </div>
+      <div class="col-md-2">
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <select name="payment_method" class="form-select form-select-sm">
+          <option value="">كل وسائل الدفع</option>
+          <option value="cash" {% if payment_method == 'cash' %}selected{% endif %}>نقدي</option>
+          <option value="bank_transfer" {% if payment_method == 'bank_transfer' %}selected{% endif %}>تحويل بنكي</option>
+          <option value="check" {% if payment_method == 'check' %}selected{% endif %}>شيك</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button type="submit" class="btn btn-gold btn-sm w-100"><i class="fas fa-search"></i></button>
+      </div>
+      <div class="col-md-1">
+        <a href="{% url 'receipts_list' %}" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-times"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-hand-holding-usd me-2"></i> سندات القبض</h6>
+    <span class="badge bg-info text-dark">{{ receipts.paginator.count }} سند</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>رقم السند</th>
+          <th>التاريخ</th>
+          <th>المستفيد</th>
+          <th>البيان</th>
+          <th>وسيلة الدفع</th>
+          <th>الحساب</th>
+          <th class="text-end">المبلغ (ر.س)</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rec in receipts %}
+        <tr>
+          <td><strong style="color:var(--accent)">{{ rec.receipt_number }}</strong></td>
+          <td>{{ rec.date }}</td>
+          <td>
+            {% if rec.client %}{{ rec.client.name }}
+            {% elif rec.payer_name %}{{ rec.payer_name }}
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-muted small">{{ rec.description|truncatechars:40 }}</td>
+          <td>
+            <span class="badge bg-light text-dark">
+              {% if rec.payment_method == 'cash' %}<i class="fas fa-money-bill text-success me-1"></i>نقدي
+              {% elif rec.payment_method == 'bank_transfer' %}<i class="fas fa-university text-primary me-1"></i>تحويل
+              {% elif rec.payment_method == 'check' %}<i class="fas fa-file-alt text-warning me-1"></i>شيك
+              {% else %}{{ rec.payment_method }}{% endif %}
+            </span>
+          </td>
+          <td class="small text-muted">{{ rec.cash_account.name|default:"—" }}</td>
+          <td class="text-end fw-bold" style="color:#4CAF50">{{ rec.amount|floatformat:2 }}</td>
+          <td>
+            <span class="badge {% if rec.is_accounted %}bg-success{% else %}bg-warning text-dark{% endif %}">
+              {% if rec.is_accounted %}مرحل{% else %}غير مرحل{% endif %}
+            </span>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'receipt_detail' rec.pk %}" class="btn btn-sm btn-outline-primary" title="عرض">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="{% url 'receipt_print' rec.pk %}" class="btn btn-sm btn-outline-secondary" title="طباعة" target="_blank">
+                <i class="fas fa-print"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-4">
+            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+            لا توجد سندات قبض
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% if receipts %}
+      <tfoot style="background:#f8f9fa">
+        <tr>
+          <td colspan="6" class="fw-bold text-center">الإجمالي</td>
+          <td class="text-end fw-bold" style="color:#4CAF50">{{ total_receipts|floatformat:2 }}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+  <!-- Pagination -->
+  {% if receipts.has_other_pages %}
+  <div class="p-3 d-flex justify-content-center">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if receipts.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ receipts.previous_page_number }}&q={{ q }}&date_from={{ date_from }}&date_to={{ date_to }}">السابق</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ receipts.number }} / {{ receipts.paginator.num_pages }}</span></li>
+        {% if receipts.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ receipts.next_page_number }}&q={{ q }}&date_from={{ date_from }}&date_to={{ date_to }}">التالي</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

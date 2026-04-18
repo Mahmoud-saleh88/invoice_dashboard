@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}سجلات زاتكا{% endblock %}
+{% block page_title %}سجلات التكامل مع زاتكا{% endblock %}
+
+{% block content %}
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-history me-2"></i>سجلات الإرسال لزاتكا</h6>
+    <a href="{% url 'zatca_onboarding' %}" class="btn btn-sm btn-outline-light">
+      <i class="fas fa-arrow-right me-1"></i>إعدادات زاتكا
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>التاريخ</th>
+          <th>الجهاز</th>
+          <th>الإجراء</th>
+          <th>الفاتورة</th>
+          <th>HTTP</th>
+          <th>الحالة</th>
+          <th>التفاصيل</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td><small>{{ log.created_at|date:"Y-m-d H:i" }}</small></td>
+          <td><small>{{ log.device.device_name|default:"—" }}</small></td>
+          <td>
+            <span class="badge" style="background:rgba(56,138,221,.15);color:#378ADD">
+              {{ log.get_action_display }}
+            </span>
+          </td>
+          <td>
+            {% if log.sales_invoice %}
+              <a href="{% url 'sales_detail' log.sales_invoice.pk %}">
+                {{ log.sales_invoice.invoice_number }}
+              </a>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <code style="font-size:.85rem;font-weight:700;color:
+              {% if log.response_code == 200 or log.response_code == 202 %}#1D9E75
+              {% elif log.response_code == 401 %}#E24B4A
+              {% elif log.response_code == 400 %}#C9A84C
+              {% else %}#888{% endif %}">
+              {{ log.response_code|default:"—" }}
+            </code>
+          </td>
+          <td>
+            {% if log.success %}
+              <span class="badge" style="background:rgba(29,158,117,.2);color:#1D9E75">✓ نجاح</span>
+            {% else %}
+              <span class="badge" style="background:rgba(226,75,74,.2);color:#E24B4A">✗ فشل</span>
+            {% endif %}
+          </td>
+          <td style="max-width:300px">
+            <small class="text-danger" style="word-break:break-word">
+              {{ log.error_message|truncatechars:120 }}
+            </small>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            <i class="fas fa-history fa-2x mb-2 d-block opacity-25"></i>
+            لا توجد سجلات زاتكا بعد
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if logs.has_other_pages %}
+  <div class="p-3 border-top">
+    <nav>
+      <ul class="pagination justify-content-center mb-0">
+        {% if logs.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ logs.previous_page_number }}">
+            <i class="fas fa-angle-right"></i>
+          </a>
+        </li>
+        {% endif %}
+        {% for num in page_range %}
+          {% if num == '...' %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+          {% else %}
+            <li class="page-item {% if logs.number == num %}active{% endif %}">
+              <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        {% if logs.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ logs.next_page_number }}">
+            <i class="fas fa-angle-left"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

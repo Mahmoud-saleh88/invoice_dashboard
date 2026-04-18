@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}حساب الأستاذ العام{% endblock %}
+{% block page_title %}حساب الأستاذ العام{% endblock %}
+
+{% block extra_css %}
+<style>
+.ledger-block { margin-bottom: 2rem; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.ledger-account-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ledger-account-header .acc-code {
+  font-size: 1rem; font-weight: 800; color: var(--accent); letter-spacing: 1px;
+}
+.ledger-account-header .acc-name { color: #fff; font-weight: 700; font-size: .92rem; }
+.ledger-account-header .acc-bal {
+  background: rgba(201,168,76,.15);
+  border: 1px solid var(--accent);
+  color: var(--accent); font-weight: 800;
+  padding: 4px 14px; border-radius: 20px; font-size: .88rem;
+}
+.opening-row td { background: #f0f4ff !important; font-weight: 700; color: #1a1a2e; }
+.closing-row td { background: #fff8e1 !important; font-weight: 700; }
+.dr-cell  { color: #1B5E20 !important; font-weight: 600; }
+.cr-cell  { color: #B71C1C !important; font-weight: 600; }
+.bal-pos  { color: #0D47A1 !important; font-weight: 700; }
+.bal-neg  { color: #B71C1C !important; font-weight: 700; }
+.grand-total-card {
+  background: var(--primary); color: #fff;
+  border-radius: 12px; padding: 20px 28px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,.2);
+}
+.grand-total-card .stat { text-align: center; }
+.grand-total-card .stat .val { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+.grand-total-card .stat .lbl { font-size: .75rem; color: rgba(255,255,255,.5); margin-top: 2px; }
+@media print {
+  #sidebar, .topbar, .filter-card, .no-print { display:none!important; }
+  #main-content { margin:0!important; }
+  .ledger-block { break-inside: avoid; page-break-inside: avoid; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- فلاتر -->
+<div class="data-card mb-4 filter-card">
+  <div class="card-header">
+    <h6><i class="fas fa-filter me-2"></i> معايير حساب الأستاذ</h6>
+    <div class="d-flex gap-2 no-print">
+      <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}&account_id={{ account_id }}&category={{ cat_code }}"
+         class="btn btn-sm btn-outline-success">
+        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+      </a>
+      <button onclick="window.print()" class="btn btn-sm btn-outline-light">
+        <i class="fas fa-print"></i>
+      </button>
+    </div>
+  </div>
+  <div class="p-3">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label">من تاريخ</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">إلى تاريخ</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">الفئة</label>
+        <select name="category" class="form-select">
+          <option value="">كل الفئات</option>
+          {% for cat in categories %}
+          <option value="{{ cat.code }}" {% if cat_code == cat.code %}selected{% endif %}>
+            {{ cat.code }} - {{ cat.name_ar }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">حساب محدد</label>
+        <select name="account_id" class="form-select">
+          <option value="">كل الحسابات</option>
+          {% for acc in accounts_list %}
+          <option value="{{ acc.pk }}" {% if account_id == acc.pk|stringformat:"s" %}selected{% endif %}>
+            {{ acc.code }} - {{ acc.name_ar }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-gold flex-fill">
+          <i class="fas fa-search me-1"></i> عرض
+        </button>
+        <a href="{% url 'general_ledger' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-times"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- عنوان التقرير -->
+<div class="text-center mb-4 no-print">
+  <h4 class="fw-bold" style="color:var(--primary)">
+    <i class="fas fa-book me-2" style="color:var(--accent)"></i>
+    حساب الأستاذ العام
+  </h4>
+  <p class="text-muted mb-0">من {{ date_from }} إلى {{ date_to }}</p>
+</div>
+
+<!-- إجماليات كلية -->
+{% if ledger_data %}
+<div class="grand-total-card mb-4 no-print">
+  <div class="stat">
+    <div class="val">{{ ledger_data|length }}</div>
+    <div class="lbl">عدد الحسابات</div>
+  </div>
+  <div class="stat">
+    <div class="val">{{ grand_debit|floatformat:2 }}</div>
+    <div class="lbl">إجمالي المدين (ر.س)</div>
+  </div>
+  <div class="stat">
+    <div class="val">{{ grand_credit|floatformat:2 }}</div>
+    <div class="lbl">إجمالي الدائن (ر.س)</div>
+  </div>
+  <div class="stat">
+    <div class="val" style="color:{% if grand_closing >= 0 %}var(--accent){% else %}#f44336{% endif %}">
+      {{ grand_closing|floatformat:2 }}
+    </div>
+    <div class="lbl">الرصيد الختامي الكلي (ر.س)</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- بيانات الأستاذ -->
+{% for block in ledger_data %}
+<div class="ledger-block">
+
+  <!-- رأس الحساب -->
+  <div class="ledger-account-header">
+    <div>
+      <span class="acc-code">{{ block.account.code }}</span>
+      <span class="acc-name ms-3">{{ block.account.name_ar }}</span>
+      <small class="text-muted ms-2">{{ block.account.name_en }}</small>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <small class="text-muted">
+        {{ block.account.group.category.name_ar }} &rsaquo; {{ block.account.group.name_ar }}
+      </small>
+      <span class="acc-bal">
+        الرصيد: {{ block.closing_balance|floatformat:2 }} ر.س
+      </span>
+      <a href="{% url 'account_statement' block.account.pk %}?date_from={{ date_from }}&date_to={{ date_to }}"
+         class="btn btn-sm btn-outline-light no-print" title="كشف مستقل">
+        <i class="fas fa-external-link-alt"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- جدول الحركات -->
+  <div class="table-responsive">
+    <table class="table table-hover table-sm mb-0" style="font-size:.84rem">
+      <thead style="background:var(--secondary)">
+        <tr>
+          <th style="color:var(--accent);width:105px">التاريخ</th>
+          <th style="color:var(--accent);width:120px">رقم القيد</th>
+          <th style="color:var(--accent)">البيان</th>
+          <th style="color:#4CAF50;text-align:right;width:120px">مدين (ر.س)</th>
+          <th style="color:#f44336;text-align:right;width:120px">دائن (ر.س)</th>
+          <th style="color:var(--accent);text-align:right;width:130px">الرصيد (ر.س)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- رصيد أول المدة -->
+        <tr class="opening-row">
+          <td colspan="3"><strong>رصيد أول المدة بتاريخ {{ date_from }}</strong></td>
+          <td class="text-end">—</td>
+          <td class="text-end">—</td>
+          <td class="text-end fw-bold">{{ block.opening_balance|floatformat:2 }}</td>
+        </tr>
+
+        <!-- حركات الفترة -->
+        {% for entry in block.entries %}
+        <tr>
+          <td>{{ entry.date|date:"Y-m-d" }}</td>
+          <td>
+            <a href="{% url 'journal_entry_detail' entry.entry_id %}"
+               class="text-decoration-none fw-bold" style="color:var(--accent)">
+              {{ entry.entry_number }}
+            </a>
+          </td>
+          <td class="text-truncate" style="max-width:320px" title="{{ entry.description }}">
+            {{ entry.description }}
+          </td>
+          <td class="text-end dr-cell">
+            {% if entry.debit > 0 %}{{ entry.debit|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end cr-cell">
+            {% if entry.credit > 0 %}{{ entry.credit|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end {% if entry.running_balance >= 0 %}bal-pos{% else %}bal-neg{% endif %}">
+            {{ entry.running_balance|floatformat:2 }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-3">
+            <i class="fas fa-inbox opacity-25 me-2"></i>
+            لا توجد حركات في هذه الفترة — الرصيد محمول من السابق
+          </td>
+        </tr>
+        {% endfor %}
+
+        <!-- الإجماليات -->
+        <tr class="closing-row">
+          <td colspan="2"><strong>إجمالي الفترة</strong></td>
+          <td></td>
+          <td class="text-end dr-cell"><strong>{{ block.period_debit|floatformat:2 }}</strong></td>
+          <td class="text-end cr-cell"><strong>{{ block.period_credit|floatformat:2 }}</strong></td>
+          <td class="text-end {% if block.closing_balance >= 0 %}bal-pos{% else %}bal-neg{% endif %}">
+            <strong>{{ block.closing_balance|floatformat:2 }}</strong>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% empty %}
+<div class="text-center py-5 text-muted">
+  <i class="fas fa-book fa-3x mb-3 d-block opacity-25"></i>
+  <h5>لا توجد بيانات في الفترة المحددة</h5>
+  <p>عدّل معايير الفلترة وأعد المحاولة</p>
+</div>
+{% endfor %}
+
+{% endblock %}

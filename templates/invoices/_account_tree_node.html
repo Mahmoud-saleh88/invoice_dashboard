@@ -1,0 +1,48 @@
+{% load static %}
+{% for account in accounts %}
+<div class="account-tree-item" style="margin-right:{{ level|default:0 }}rem">
+  <div class="d-flex align-items-center gap-2 py-1 px-2 rounded hover-row"
+       style="border-right:3px solid {% if account.account_type == 'asset' %}#4CAF50{% elif account.account_type == 'liability' %}#f44336{% elif account.account_type == 'equity' %}var(--accent){% elif account.account_type == 'revenue' %}#2196F3{% else %}#FF9800{% endif %}">
+    {% if account.children.exists %}
+    <button class="btn btn-sm p-0 border-0 text-muted tree-toggle" data-target="children-{{ account.pk }}" style="width:20px">
+      <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
+    </button>
+    {% else %}
+    <span style="width:20px;display:inline-block"></span>
+    {% endif %}
+    
+    <code style="font-size:0.8rem;color:var(--accent);min-width:60px">{{ account.code }}</code>
+    <span class="flex-grow-1 {% if not account.allow_posting %}fw-bold{% endif %}">
+      {{ account.name_ar }}
+      {% if not account.allow_posting %}
+      <small class="badge bg-secondary bg-opacity-50 ms-1" style="font-size:0.65rem">مجموعة</small>
+      {% endif %}
+    </span>
+    <span class="text-muted small ms-2">{{ account.name }}</span>
+    
+    {% if account.allow_posting %}
+    <span class="fw-bold ms-2 text-end" style="min-width:100px;
+      color:{% if account.balance >= 0 %}#4CAF50{% else %}#f44336{% endif %}">
+      {{ account.balance|floatformat:2 }}
+    </span>
+    {% endif %}
+    
+    <div class="d-flex gap-1 ms-2">
+      {% if account.allow_posting %}
+      <a href="{% url 'account_ledger' account.pk %}" class="btn btn-xs btn-outline-secondary" title="كشف حساب" style="padding:2px 6px;font-size:0.7rem">
+        <i class="fas fa-book"></i>
+      </a>
+      {% endif %}
+      <a href="{% url 'account_edit' account.pk %}" class="btn btn-xs btn-outline-warning" title="تعديل" style="padding:2px 6px;font-size:0.7rem">
+        <i class="fas fa-edit"></i>
+      </a>
+    </div>
+  </div>
+  
+  {% if account.children.exists %}
+  <div id="children-{{ account.pk }}" class="account-children ps-3">
+    {% include "invoices/_account_tree_node.html" with accounts=account.children.all level=level|add:1 %}
+  </div>
+  {% endif %}
+</div>
+{% endfor %}

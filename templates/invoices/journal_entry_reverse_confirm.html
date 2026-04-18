@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}عكس القيد {{ entry.number }}{% endblock %}
+{% block page_title %}عكس القيد{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="data-card">
+      <div class="card-header" style="background:#c62828">
+        <h6><i class="fas fa-undo me-2"></i> تأكيد عكس القيد</h6>
+      </div>
+      <div class="p-4">
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>تنبيه:</strong> سيتم إنشاء قيد عكسي جديد يلغي تأثير هذا القيد على جميع الحسابات.
+          القيد العكسي يُنشأ بحالة <strong>مسودة</strong> ويحتاج إلى ترحيل منفصل.
+        </div>
+
+        <table class="table table-bordered mb-4">
+          <tr>
+            <th width="35%">رقم القيد</th>
+            <td><strong style="color:var(--accent)">{{ entry.number }}</strong></td>
+          </tr>
+          <tr>
+            <th>التاريخ</th>
+            <td>{{ entry.date }}</td>
+          </tr>
+          <tr>
+            <th>نوع القيد</th>
+            <td>{{ entry.get_entry_type_display }}</td>
+          </tr>
+          <tr>
+            <th>البيان</th>
+            <td>{{ entry.description }}</td>
+          </tr>
+          <tr>
+            <th>عدد البنود</th>
+            <td>{{ entry.lines.count }} بند</td>
+          </tr>
+          <tr>
+            <th>إجمالي المدين</th>
+            <td class="text-success fw-bold">{{ entry.total_debit|floatformat:2 }} ر.س</td>
+          </tr>
+          <tr>
+            <th>إجمالي الدائن</th>
+            <td class="text-danger fw-bold">{{ entry.total_credit|floatformat:2 }} ر.س</td>
+          </tr>
+        </table>
+
+        <!-- بنود القيد للمراجعة -->
+        <div class="table-responsive mb-4">
+          <table class="table table-sm table-bordered">
+            <thead style="background:var(--secondary)">
+              <tr>
+                <th style="color:var(--accent)">الحساب</th>
+                <th style="color:#4CAF50;text-align:right">مدين</th>
+                <th style="color:#f44336;text-align:right">دائن</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line in entry.lines.all %}
+              <tr>
+                <td>
+                  <code class="small">{{ line.account.code }}</code>
+                  {{ line.account.name_ar }}
+                </td>
+                <td class="text-end text-success">
+                  {% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2 }}{% else %}—{% endif %}
+                </td>
+                <td class="text-end text-danger">
+                  {% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2 }}{% else %}—{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert-info mb-4">
+          <i class="fas fa-info-circle me-2"></i>
+          سيتم إنشاء قيد عكسي رقم <strong>REV-{{ entry.number }}</strong>
+          يعكس جميع المدين والدائن في البنود أعلاه.
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">بيان القيد العكسي (اختياري)</label>
+            <input type="text" name="description"
+                   class="form-control"
+                   value="عكس القيد: {{ entry.description }}"
+                   placeholder="بيان القيد العكسي">
+          </div>
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'journal_entry_detail' entry.pk %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-undo me-1"></i> تأكيد إنشاء القيد العكسي
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-cube me-2"></i> {{ title }}</h6>
+      </div>
+      <div class="p-4">
+        <form method="POST">
+          {% csrf_token %}
+
+          <h6 class="mb-3" style="color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:8px">
+            <i class="fas fa-info-circle me-2"></i> معلومات الأصل
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-8">
+              <label class="form-label">اسم الأصل <span class="text-danger">*</span></label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">رقم الأصل</label>
+              {{ form.asset_number }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">نوع الأصل <span class="text-danger">*</span></label>
+              {{ form.asset_type }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">الموقع</label>
+              {{ form.location }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">وصف الأصل</label>
+              {{ form.description }}
+            </div>
+          </div>
+
+          <h6 class="mb-3" style="color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:8px">
+            <i class="fas fa-dollar-sign me-2"></i> التكلفة والقيمة
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label">تاريخ الشراء <span class="text-danger">*</span></label>
+              {{ form.purchase_date }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">التكلفة (ر.س) <span class="text-danger">*</span></label>
+              {{ form.cost }}
+              {% if form.cost.errors %}<div class="text-danger small">{{ form.cost.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">القيمة التخريدية (ر.س)</label>
+              {{ form.salvage_value }}
+              <div class="form-text">القيمة المتوقعة عند نهاية العمر الإنتاجي</div>
+            </div>
+          </div>
+
+          <h6 class="mb-3" style="color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:8px">
+            <i class="fas fa-chart-line me-2"></i> بيانات الإهلاك
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label">طريقة الإهلاك <span class="text-danger">*</span></label>
+              {{ form.depreciation_method }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">العمر الإنتاجي (سنوات)</label>
+              {{ form.useful_life_years }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">نسبة الإهلاك السنوية (%)</label>
+              {{ form.depreciation_rate }}
+              <div class="form-text">اتركها فارغة لحسابها تلقائياً</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">حساب الأصل في دليل الحسابات</label>
+              {{ form.asset_account }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">حساب مجمع الإهلاك</label>
+              {{ form.depreciation_account }}
+            </div>
+          </div>
+
+          <!-- حاسبة الإهلاك -->
+          <div class="p-3 rounded mb-4" style="background:#f8f9fa;border:2px dashed var(--accent)">
+            <div class="fw-bold mb-2" style="color:var(--accent)">
+              <i class="fas fa-calculator me-2"></i> حاسبة الإهلاك السنوي
+            </div>
+            <div class="row text-center">
+              <div class="col-3">
+                <div class="small text-muted">التكلفة</div>
+                <div id="dep-cost" class="fw-bold">—</div>
+              </div>
+              <div class="col-3">
+                <div class="small text-muted">القيمة التخريدية</div>
+                <div id="dep-salvage" class="fw-bold text-warning">—</div>
+              </div>
+              <div class="col-3">
+                <div class="small text-muted">الإهلاك السنوي (قسط)</div>
+                <div id="dep-annual" class="fw-bold text-danger">—</div>
+              </div>
+              <div class="col-3">
+                <div class="small text-muted">نسبة الإهلاك</div>
+                <div id="dep-rate" class="fw-bold" style="color:var(--primary)">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">المورد</label>
+              {{ form.supplier }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">رقم الفاتورة عند الشراء</label>
+              {{ form.purchase_invoice_number }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">ملاحظات</label>
+              {{ form.notes }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{% url 'fixed_assets_list' %}" class="btn btn-outline-secondary">إلغاء</a>
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-save me-1"></i> {{ button_text }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function calcDep() {
+  const cost = parseFloat(document.getElementById('id_cost')?.value) || 0;
+  const salvage = parseFloat(document.getElementById('id_salvage_value')?.value) || 0;
+  const life = parseFloat(document.getElementById('id_useful_life_years')?.value) || 0;
+  const fmt = v => v ? v.toLocaleString('ar-SA', {minimumFractionDigits:2}) + ' ر.س' : '—';
+  document.getElementById('dep-cost').textContent = fmt(cost);
+  document.getElementById('dep-salvage').textContent = fmt(salvage);
+  if (cost > 0 && life > 0) {
+    const annual = (cost - salvage) / life;
+    const rate = ((cost - salvage) / cost * 100 / life);
+    document.getElementById('dep-annual').textContent = fmt(annual);
+    document.getElementById('dep-rate').textContent = rate.toFixed(2) + '%';
+  }
+}
+['id_cost','id_salvage_value','id_useful_life_years'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', calcDep);
+});
+</script>
+{% endblock %}

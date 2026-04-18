@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block page_title %}لوحة التحكم{% endblock %}
+
+{% block content %}
+<style>
+  .kpi-card {
+    background: #fff; border-radius: 14px; padding: 16px 18px;
+    box-shadow: 0 3px 16px rgba(0,0,0,0.07); border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative; overflow: hidden; height: 100%;
+  }
+  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.12); }
+  .kpi-bar { position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
+  .kpi-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:10px; }
+  .kpi-value { font-size:1.15rem; font-weight:700; color:#1a1a2e; line-height:1.1; margin-bottom:2px; direction:ltr; unicode-bidi:embed; }
+  .kpi-label { font-size:0.72rem; color:#7a7a9a; font-weight:600; }
+  .kpi-sub   { font-size:0.66rem; color:#b0b0c8; margin-top:2px; }
+  .kpi-year  { position:absolute; top:8px; left:10px; font-size:0.62rem; color:#aaa; background:#f5f5f5; border-radius:6px; padding:1px 6px; direction:ltr; }
+  .chart-container { width:100%; height:320px; direction:ltr; }
+  .chart-error { text-align:center; padding:40px 20px; background:#f8f9fa; border-radius:12px; color:#6c757d; }
+</style>
+<div class="d-flex align-items-center justify-content-between mb-3" style="direction:ltr;">
+  <a href="{% url 'accounting_dashboard' %}" class="btn btn-sm btn-gold">
+    <i class="fas fa-book me-1"></i> لوحة المحاسبة
+  </a>
+  <div class="d-flex align-items-center gap-2">
+    <span style="font-size:0.85rem; color:#888;">جميع الأرقام للعام</span>
+    <span class="badge" style="background:#036340; font-size:0.85rem; padding:4px 10px;">{{ current_year }}</span>
+  </div>
+</div>
+<!-- ══ 6 KPI Cards in one row ══════════════════════════════════════════════ -->
+<div class="row g-2 mb-4">
+
+  <div class="col-xl-2 col-lg-4 col-md-6">
+    <div class="kpi-card">
+      <div class="kpi-bar" style="background:linear-gradient(90deg,#C9A84C,#f0d080);"></div>
+      <span class="kpi-year">{{ current_year }}</span>
+      <div class="kpi-icon" style="background:#fff8e1;"><i class="fas fa-arrow-trend-up" style="color:#C9A84C;"></i></div>
+      <div class="kpi-value">{{ sales_total|floatformat:0|localize }}</div>
+      <div class="kpi-label">إجمالي المبيعات</div>
+      <div class="kpi-sub">{{ sales_count|localize }} فاتورة &nbsp;·&nbsp; ر.س</div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-lg-4 col-md-6">
+    <div class="kpi-card">
+      <div class="kpi-bar" style="background:linear-gradient(90deg,#0c7a9e,#56c4e8);"></div>
+      <span class="kpi-year">{{ current_year }}</span>
+      <div class="kpi-icon" style="background:#e3f6fc;"><i class="fas fa-cart-shopping" style="color:#0c7a9e;"></i></div>
+      <div class="kpi-value">{{ purchases_total|floatformat:0|localize }}</div>
+      <div class="kpi-label">إجمالي المشتريات</div>
+      <div class="kpi-sub">{{ purchases_count|localize }} فاتورة &nbsp;·&nbsp; ر.س</div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-lg-4 col-md-6">
+    <div class="kpi-card">
+      <div class="kpi-bar" style="background:linear-gradient(90deg,#6f42c1,#a78bfa);"></div>
+      <span class="kpi-year">{{ current_year }}</span>
+      <div class="kpi-icon" style="background:#f0ebff;"><i class="fas fa-file-invoice" style="color:#6f42c1;"></i></div>
+      <div class="kpi-value">{{ sales_tax_total|floatformat:0|localize }}</div>
+      <div class="kpi-label">ضريبة المبيعات</div>
+      <div class="kpi-sub">ضريبة القيمة المضافة &nbsp;·&nbsp; ر.س</div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-lg-4 col-md-6">
+    <div class="kpi-card">
+      <div class="kpi-bar" style="background:linear-gradient(90deg,#e83e8c,#f9a8d4);"></div>
+      <span class="kpi-year">{{ current_year }}</span>
+      <div class="kpi-icon" style="background:#fce8f3;"><i class="fas fa-receipt" style="color:#e83e8c;"></i></div>
+      <div class="kpi-value">{{ purchases_tax_total|floatformat:0|localize }}</div>
+      <div class="kpi-label">ضريبة المشتريات</div>
+      <div class="kpi-sub">ضريبة القيمة المضافة &nbsp;·&nbsp; ر.س</div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-lg-4 col-md-6">
+    <div class="kpi-card">
+      <div class="kpi-bar" style="background:linear-gradient(90deg,#036340,#2ecc71);"></div>
+      <span class="kpi-year">{{ current_year }}</span>
+      <div class="kpi-icon" style="background:#e6f9f0;"><i class="fas fa-calculator" style="color:#036340;"></i></div>
+      <div class="kpi-value">{{ avg_sales_invoice|floatformat:0|localize }}</div>
+      <div class="kpi-label">متوسط فاتورة المبيعات</div>
+      <div class="kpi-sub">لكل فاتورة &nbsp;·&nbsp; ر.س</div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-lg-4 col-md-6">
+    <div class="kpi-card">
+      <div class="kpi-bar" style="background:linear-gradient(90deg,#fd7e14,#ffc07a);"></div>
+      <span class="kpi-year">{{ current_year }}</span>
+      <div class="kpi-icon" style="background:#fff3e6;"><i class="fas fa-scale-balanced" style="color:#fd7e14;"></i></div>
+      <div class="kpi-value">{{ avg_purchase_invoice|floatformat:0|localize }}</div>
+      <div class="kpi-label">متوسط فاتورة المشتريات</div>
+      <div class="kpi-sub">لكل فاتورة &nbsp;·&nbsp; ر.س</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ Charts ════════════════════════════════════════════════════════════════ -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="data-card">
+      <div class="card-header"><h6><i class="fas fa-chart-bar me-2"></i>المبيعات والمشتريات ( آخر 6 أشهر )</h6></div>
+      <div class="p-3"><div id="barChart" class="chart-container"></div></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="data-card">
+      <div class="card-header"><h6><i class="fas fa-chart-pie me-2"></i>توزيع المبالغ والضرائب ({{ current_year }})</h6></div>
+      <div class="p-3"><div id="donutChart" class="chart-container"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Recent Invoices ═══════════════════════════════════════════════════════ -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-arrow-up me-2"></i>أحدث فواتير المبيعات</h6>
+        <a href="{% url 'sales_list' %}" class="btn btn-sm btn-gold">عرض الكل</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead><tr><th>رقم الفاتورة</th><th>العميل</th><th>التاريخ</th><th>المجموع</th></tr></thead>
+          <tbody>
+          {% for inv in recent_sales %}
+          <tr>
+            <td><span class="badge-invoice">{{ inv.invoice_number }}</span></td>
+            <td>{{ inv.client.name }}</td>
+            <td style="font-size:0.82rem;color:#888;">{{ inv.date|date:"Y-m-d" }}</td>
+            <td><strong>{{ inv.total|floatformat:2|localize }}</strong></td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="text-center text-muted py-3">لا توجد بيانات</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="data-card">
+      <div class="card-header">
+        <h6><i class="fas fa-arrow-down me-2"></i>أحدث فواتير المشتريات</h6>
+        <a href="{% url 'purchases_list' %}" class="btn btn-sm btn-gold">عرض الكل</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead><tr><th>رقم الفاتورة</th><th>المورد</th><th>التاريخ</th><th>المجموع</th></tr></thead>
+          <tbody>
+          {% for inv in recent_purchases %}
+          <tr>
+            <td><span class="badge-invoice">{{ inv.invoice_number }}</span></td>
+            <td>{{ inv.supplier.name }}</td>
+            <td style="font-size:0.82rem;color:#888;">{{ inv.date }}</td>
+            <td><strong>{{ inv.total|floatformat:2|localize }}</strong></td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="text-center text-muted py-3">لا توجد بيانات</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Top Clients / Suppliers ═══════════════════════════════════════════════ -->
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="data-card">
+      <div class="card-header"><h6><i class="fas fa-users me-2"></i>أكبر العملاء ({{ current_year }})</h6></div>
+      <div class="p-3">
+        {% for c in top_clients %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-user" style="color:#C9A84C;font-size:0.75rem;"></i>
+            </div>
+            <span style="font-size:0.88rem;font-weight:600;">{{ c.client__name }}</span>
+          </div>
+          <span class="badge bg-warning text-dark">{{ c.total|floatformat:0|localize }} ر.س</span>
+        </div>
+        {% empty %}<p class="text-center text-muted py-2">لا توجد بيانات</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="data-card">
+      <div class="card-header"><h6><i class="fas fa-truck me-2"></i>أكبر الموردين ({{ current_year }})</h6></div>
+      <div class="p-3">
+        {% for s in top_suppliers %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#0c7a9e,#084d66);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-truck" style="color:#fff;font-size:0.75rem;"></i>
+            </div>
+            <span style="font-size:0.88rem;font-weight:600;">{{ s.supplier__name }}</span>
+          </div>
+          <span class="badge bg-info text-dark">{{ s.total|floatformat:0|localize }} ر.س</span>
+        </div>
+        {% empty %}<p class="text-center text-muted py-2">لا توجد بيانات</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="chart-data" type="application/json">{{ chart_data_json|safe }}</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  let cd;
+  try { cd = JSON.parse(document.getElementById('chart-data').textContent.trim()); }
+  catch(e) { console.error("Chart parse error:", e); return; }
+
+  const fmt = v => (parseFloat(v) || 0).toLocaleString('en-US');
+
+  // ── Bar Chart ─────────────────────────────────────────────────────────────
+  const barEl = document.getElementById("barChart");
+  if (barEl) {
+    const mn = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const labels = (cd.labels || []).map(l => {
+      if (typeof l === 'string' && l.includes('-')) {
+        const [y, m] = l.split('-');
+        return (mn[parseInt(m) - 1] || m) + ' ' + y;
+      }
+      return String(l);
+    });
+    if (!labels.length) {
+      barEl.innerHTML = '<div class="chart-error"><p>لا توجد بيانات</p></div>';
+    } else {
+      new ApexCharts(barEl, {
+        series: [
+          { name: 'المبيعات',  data: cd.sales     || [] },
+          { name: 'المشتريات', data: cd.purchases  || [] },
+        ],
+        chart: { type: 'bar', height: 320, fontFamily: 'Cairo,Arial,sans-serif', toolbar: { show: false } },
+        colors: ['#C9A84C', '#036340'],
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+        dataLabels: { enabled: false },
+        xaxis: { categories: labels, labels: { style: { fontSize: '12px' }, rotate: -30 } },
+        yaxis: { labels: { formatter: v => Math.round(v).toLocaleString('en-US'), style: { fontSize: '11px' } } },
+        tooltip: { y: { formatter: v => fmt(v) + ' ر.س' } },
+        legend: { position: 'top', fontFamily: 'Cairo,Arial,sans-serif' },
+        grid: { borderColor: '#e0e0e0', strokeDashArray: 3 },
+      }).render();
+    }
+  }
+
+  // ── Donut Chart ───────────────────────────────────────────────────────────
+  const donutEl = document.getElementById("donutChart");
+  if (donutEl) {
+    // ✅ Read all 4 values from JSON — sales_tax_total & purchases_tax_total
+    // must be present in chart_data_json from the view
+    const st  = parseFloat(cd.sales_total)         || 0;
+    const pt  = parseFloat(cd.purchases_total)     || 0;
+    const stt = parseFloat(cd.sales_tax_total)     || 0;
+    const ptt = parseFloat(cd.purchases_tax_total) || 0;
+
+    if (st + pt + stt + ptt === 0) {
+      donutEl.innerHTML = '<div class="chart-error"><p>لا توجد بيانات</p></div>';
+    } else {
+      new ApexCharts(donutEl, {
+        series: [st, pt, stt, ptt],
+        chart: { type: 'donut', height: 320, fontFamily: 'Cairo,Arial,sans-serif' },
+        labels: ['إجمالي المبيعات', 'إجمالي المشتريات', 'ضريبة المبيعات', 'ضريبة المشتريات'],
+        colors: ['#C9A84C', '#036340', '#8b66d1', '#58baec'],
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '65%',
+              labels: {
+                show: true,
+                name:  { show: true, fontSize: '12px', fontFamily: 'Cairo,Arial,sans-serif', fontWeight: 600 },
+                value: { show: true, fontSize: '14px', fontFamily: 'Cairo,Arial,sans-serif',
+                         formatter: v => fmt(v) + ' ر.س' },
+                total: {
+                  show: true, label: 'الإجمالي',
+                  fontSize: '12px', fontFamily: 'Cairo,Arial,sans-serif', fontWeight: 600,
+                  formatter: w =>
+                    w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString('en-US') + ' ر.س',
+                },
+              },
+            },
+          },
+        },
+        dataLabels: { enabled: false },
+        // ✅ Legend: label name only, no appended values
+        legend: {
+          position: 'bottom',
+          fontFamily: 'Cairo,Arial,sans-serif',
+          fontSize: '12px',
+          markers: { width: 10, height: 10, radius: 5 },
+        },
+        // ✅ Tooltip shows value on hover
+        tooltip: {
+          y: { formatter: v => fmt(v) + ' ر.س' },
+        },
+      }).render();
+    }
+  }
+
+});
+</script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}إقرارات ضريبة القيمة المضافة{% endblock %}
+{% block page_title %}إقرارات ضريبة القيمة المضافة{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-4">
+  <a href="{% url 'vat_return_create' %}" class="btn btn-gold">
+    <i class="fas fa-plus me-1"></i> إقرار جديد
+  </a>
+</div>
+
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-percentage me-2"></i> إقرارات ضريبة القيمة المضافة (VAT)</h6>
+    <span class="badge bg-info text-dark">{{ returns|length }} إقرار</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>رقم الإقرار</th>
+          <th>الفترة</th>
+          <th class="text-end">ضريبة المخرجات</th>
+          <th class="text-end">ضريبة المدخلات</th>
+          <th class="text-end">صافي الضريبة</th>
+          <th>الحالة</th>
+          <th>تاريخ الإرسال</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for vat in returns %}
+        <tr>
+          <td><strong style="color:var(--accent)">{{ vat.return_number|default:vat.pk }}</strong></td>
+          <td>
+            {{ vat.period_start }} — {{ vat.period_end }}
+            <br><small class="text-muted">{{ vat.get_period_type_display|default:"" }}</small>
+          </td>
+          <td class="text-end">{{ vat.output_vat|floatformat:2 }}</td>
+          <td class="text-end text-success">{{ vat.input_vat|floatformat:2 }}</td>
+          <td class="text-end fw-bold {% if vat.net_vat > 0 %}text-danger{% else %}text-success{% endif %}">
+            {{ vat.net_vat|floatformat:2 }}
+          </td>
+          <td>
+            <span class="badge 
+              {% if vat.status == 'submitted' %}bg-success
+              {% elif vat.status == 'draft' %}bg-warning text-dark
+              {% else %}bg-secondary{% endif %}">
+              {{ vat.get_status_display }}
+            </span>
+          </td>
+          <td>{{ vat.submission_date|default:"—" }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'vat_return_detail' vat.pk %}" class="btn btn-sm btn-outline-primary" title="عرض">
+                <i class="fas fa-eye"></i>
+              </a>
+              {% if vat.status == 'draft' %}
+              <a href="{% url 'vat_return_recalculate' vat.pk %}" class="btn btn-sm btn-outline-warning" title="إعادة حساب">
+                <i class="fas fa-sync"></i>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-4">
+            <i class="fas fa-file-invoice fa-2x mb-2 d-block opacity-25"></i>
+            لا توجد إقرارات ضريبية
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

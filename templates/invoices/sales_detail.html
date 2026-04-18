@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% block title %}فاتورة ضريبية #{{ inv.invoice_number }}{% endblock %}
+{% block page_title %}فاتورة ضريبية #{{ inv.invoice_number }}{% endblock %}
+
+{% block content %}
+
+{% if not is_pdf %}
+<div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+
+  <a href="{% url 'sales_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-right me-1"></i>عودة
+  </a>
+
+  <a href="{% url 'sales_edit' inv.pk %}" class="btn btn-dark-main">
+    <i class="fas fa-edit me-1"></i>تعديل
+  </a>
+
+  <a href="{% url 'sales_pdf' inv.pk %}" target="_blank"
+     class="btn" style="background:#f8d7da; color:#b50315; border:1px solid #b50315;">
+    <i class="fas fa-file-pdf me-1"></i>PDF
+  </a>
+
+  <a href="{% url 'export_invoice_xml' inv.pk %}"
+     class="btn btn-secondary">
+    <i class="fas fa-download me-1"></i>تحميل XML
+  </a>
+
+  <a href="{% url 'view_xml' inv.pk %}"
+     class="btn btn-secondary">
+    <i class="fas fa-eye me-1"></i>عرض XML
+  </a>
+
+  {% if inv.zatca_status == 'cleared' or inv.zatca_status == 'reported' %}
+    <span class="btn btn-success disabled">
+      <i class="fas fa-check-circle me-1"></i>{{ inv.get_zatca_status_display }}
+    </span>
+  {% else %}
+    <a href="{% url 'zatca_submit_invoice' inv.pk %}"
+       class="btn {% if inv.zatca_status == 'rejected' %}btn-danger{% else %}btn-warning{% endif %}"
+       onclick="return confirm('إرسال الفاتورة {{ inv.invoice_number }} إلى زاتكا؟')">
+      <i class="fas fa-paper-plane me-1"></i>
+      {% if inv.zatca_status == 'rejected' %}إعادة إرسال{% else %}إرسال لزاتكا{% endif %}
+    </a>
+  {% endif %}
+
+</div>
+{% endif %}
+<div class="data-card p-0" style="max-width:900px; margin:auto;">
+
+  <!-- 1. Header -->
+  <div style="padding:16px 20px; display:flex; justify-content:space-between;
+              align-items:center; gap:12px; direction:ltr;">
+    <div style="flex:0 0 auto;">
+      <img src="/static/images/logo.png" alt="logo"
+           style="height:75px; width:auto;"
+           onerror="this.style.display='none'">
+    </div>
+    <div style="text-align:center; flex:1;">
+      <div style="font-size:1.4rem; font-weight:900; color:#111;">فاتورة ضريبية</div>
+      <div style="font-size:1.1rem; font-weight:700; color:#333; margin-top:2px;">TAX INVOICE</div>
+    </div>
+    <div style="flex:0 0 auto;">
+      {% if qr_b64 %}
+        <img src="{{ qr_b64 }}" style="width:72px; height:72px;" alt="QR">
+      {% else %}
+        <div style="width:72px; height:72px; background:#f0f0f0; display:flex;
+                    align-items:center; justify-content:center; border-radius:4px;">
+          <i class="fas fa-qrcode" style="font-size:2.2rem; color:#888;"></i>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Separator line — #115545 -->
+  <div style="border-top:2.5px solid #115545; margin:0 16px 10px 16px;"></div>
+
+  <div class="px-3 pb-4">
+
+    <!-- 2. Bill From / Bill To -->
+    <div style="display:flex; gap:8px; margin-bottom:8px; direction:rtl;">
+
+      <!-- Bill From -->
+      <div style="flex:1; min-width:0;">
+        <div style="background:#115545; color:white; font-weight:700; font-size:0.85rem;
+                    padding:6px 10px; display:flex; justify-content:space-between;">
+          <span>فاتورة من</span>
+          <span style="direction:ltr;">Bill From</span>
+        </div>
+        <div style="background:#f5f5f5; padding:8px 10px;">
+  <div class="bri"><span class="bal">الاسم</span><span class="bv">{{ inv.company.name }}</span><span class="bel">Name</span></div>
+  
+  <!-- ✅ العنوان المنسق -->
+  <div class="bri">
+    <span class="bal">العنوان</span>
+    <span class="bv">
+      {% spaceless %}
+        {% if inv.company.street_name %}{{ inv.company.street_name }}{% endif %}
+        {% if inv.company.building_number %}, {{ inv.company.building_number }}{% endif %}
+        {% if inv.company.district %}, {{ inv.company.district }}{% endif %}
+        {% if inv.company.city %}, {{ inv.company.city }}{% endif %}
+        {% if inv.company.postal_code %}, {{ inv.company.postal_code }}{% endif %}
+        {% if inv.company.country %}, {{ inv.company.country }}{% else %}, المملكة العربية السعودية{% endif %}
+      {% endspaceless %}
+    </span>
+    <span class="bel">Address</span>
+  </div>
+  
+  <div class="bri"><span class="bal">الرقم الضريبي</span><span class="bv ltrv">{{ inv.company.vat_number|default:"—" }}</span><span class="bel">VAT No.</span></div>
+  {% if inv.company.email %}<div class="bri"><span class="bal">البريد الإلكتروني</span><span class="bv ltrv">{{ inv.company.email }}</span><span class="bel">Email</span></div>{% endif %}
+  {% if inv.company.cr_number %}<div class="bri"><span class="bal">السجل التجاري</span><span class="bv ltrv">{{ inv.company.cr_number }}</span><span class="bel">CR No.</span></div>{% endif %}
+</div>
+      </div>
+
+      <!-- Bill To -->
+      <div style="flex:1; min-width:0;">
+        <div style="background:#115545; color:white; font-weight:700; font-size:0.85rem;
+                    padding:6px 10px; display:flex; justify-content:space-between;">
+          <span>فاتورة الى</span>
+          <span style="direction:ltr;">Bill To</span>
+        </div>
+        <div style="background:#f5f5f5; padding:8px 10px;">
+          <div class="bri"><span class="bal">الاسم</span><span class="bv">{{ inv.client.name }}</span><span class="bel">Name</span></div>
+          <div class="bri">
+          <span class="bal">العنوان</span>
+          <span class="bv">
+            {% spaceless %}
+              {% if inv.client.street_name %}{{ inv.client.street_name }}{% endif %}
+              {% if inv.client.building_number %}, {{ inv.client.building_number }}{% endif %}
+              {% if inv.client.district %}, {{ inv.client.district }}{% endif %}
+              {% if inv.client.city %}, {{ inv.client.city }}{% endif %}
+              {% if inv.client.postal_code %}, {{ inv.client.postal_code }}{% endif %}
+              {% if inv.client.country %}, {{ inv.client.country }}{% else %}, المملكة العربية السعودية{% endif %}
+            {% endspaceless %}
+          </span>
+          <span class="bel">Address</span>
+        </div>
+  
+          <div class="bri"><span class="bal">الرقم الضريبي</span><span class="bv ltrv">{{ inv.client.vat_number|default:"—" }}</span><span class="bel">VAT No.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Meta Bar -->
+    <div style="background:#f5f5f5; margin-bottom:10px; direction:rtl;">
+      <table style="width:50%; border-collapse:collapse; font-size:0.82rem;">
+        <tr>
+          <td class="mar">رقم الفاتورة</td><td class="mav">{{ inv.invoice_number }}</td><td class="mae">Invoice Number</td>
+        </tr>
+        <tr>
+          <td class="mar">تاريخ الفاتورة</td><td class="mav">{{ inv.date|date:"Y-m-d" }}</td><td class="mae">Invoice Date</td>
+        </tr>
+        <tr>
+            <td class="mar">تاريخ التوريد</td><td class="mav">
+              {% if inv.supply_date %}
+                {{ inv.supply_date|date:"Y/m/d" }}
+              {% else %}
+                <span class="text-warning">غير محدد</span>
+              {% endif %}
+            </td>
+            <td class="mae">Supply Date</td>
+        </tr>
+        <tr>
+            <td class="mar">تاريخ الاستحقاق</td><td class="mav">
+              {% if inv.due_date %}
+                {{ inv.due_date|date:"Y/m/d" }}
+              {% else %}
+                <span class="text-warning">غير محدد</span>
+              {% endif %}
+            </td>
+            <td class="mae">Due Date</td>
+        </tr>
+        
+        <tr>
+
+            <td class="mar">طريقة الدفع</td><td class="mav">{{ inv.get_payment_method_display }}</td><td class="mae">Payment Method</td>
+
+        </tr>
+        <tr>
+          <td class="mar">تم الإنشاء بواسطة</td><td class="mav">{{ inv.created_by }}</td><td class="mae">Created By</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 4. Items Table -->
+    <div class="table-responsive mb-3">
+      <table class="table table-sm mb-0" style="direction:rtl; font-size:0.82rem;">
+        <thead>
+          <tr>
+            <th class="ith text-center inv-th" style="width:4%;">#</th>
+            <th class="ith text-center inv-th" style="width:30%;">
+              <div>NATURE OF GOODS OR SERVICES</div><div class="arsub">تفاصيل السلع أو الخدمات</div>
+            </th>
+            <th class="ith text-center inv-th" style="width:11%;"><div>UNIT PRICE</div><div class="arsub">سعر الوحدة</div></th>
+            <th class="ith text-center inv-th" style="width:8%;"><div>QTY</div><div class="arsub">الكمية</div></th>
+            <th class="ith text-center inv-th" style="width:14%;"><div>TAXABLE AMOUNT</div><div class="arsub">المبلغ الخاضع للضريبة</div></th>
+            <th class="ith text-center inv-th" style="width:15%;"><div>TAX @TAX RATE</div><div class="arsub">الضريبة@ نسبة الضريبة</div></th>
+            <th class="ith text-center inv-th" style="width:13%;"><div>TOTAL</div><div class="arsub">المجموع</div></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in item_rows %}
+          <tr class="{% if forloop.counter|divisibleby:2 %}table-light{% endif %}">
+            <td class="itd text-center">{{ row.idx }}</td>
+            <td class="itd text-center" style="direction:rtl;">{{ row.description }}</td>
+            <td class="itd text-center">{{ row.unit_price }}</td>
+            <td class="itd text-center">{{ row.quantity }}</td>
+            <td class="itd text-center">{{ row.subtotal }}</td>
+            <td style="direction:ltr;" class="itd text-center">{{ row.tax }}</td>
+            <td class="itd text-center">{{ row.total }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-3">لا توجد بنود</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 5. Totals -->
+    <div style="display:flex; margin-bottom:12px;">
+      <div style="width:50%;"></div>
+      <div style="width:50%;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; direction:rtl;">
+          <tr>
+            <td class="tar">إجمالي القيمة بدون الضريبة</td>
+            <td class="tav">{{ inv.total_sales_excl_tax|floatformat:2 }}</td>
+            <td class="tae">Subtotal Excl. VAT</td>
+          </tr>
+          <tr style="background:#f5f5f5;">
+            <td class="tar">المبلغ خاضع للضريبة</td>
+            <td class="tav">{{ inv.total_sales_excl_tax|floatformat:2 }}</td>
+            <td class="tae">Taxable Amount</td>
+          </tr>
+          <tr>
+            <td class="tar">إجمالي الضريبة (ر.س)</td>
+            <td class="tav">{{ inv.total_tax|floatformat:2 }}</td>
+            <td class="tae">Total VAT (SAR)</td>
+          </tr>
+          <!-- Total row — #115545 bg, white text -->
+          <tr style="background:#115545; color:white;">
+            <td class="tar" style="color:white; font-weight:700;">المجموع مع الضريبة (ر.س)</td>
+            <td class="tav" style="color:white;">{{ inv.total|floatformat:2 }}</td>
+            <td class="tae" style="color:white; font-weight:700;">Total Including VAT (SAR)</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6. Words -->
+    <table style="width:100%; border-collapse:collapse; background:#f5f5f5; font-size:0.85rem;">
+      <tr style="border-bottom:0.5px solid #ddd;">
+        <td class="wlbl" style="direction:rtl; text-align:right; width:22%;">
+          إجمالي (بالكلمات)
+        </td>
+        <td style="padding:7px 10px; direction:rtl; text-align:right;">
+          {{ words_ar }}
+        </td>
+      </tr>
+      <tr>
+        <td class="wlbl" style="direction:rtl; text-align:right; width:22%;">
+          Total (in words)
+        </td>
+        <td style="padding:7px 10px; direction:rtl; text-align:right;">
+          {{ words_en }}
+        </td>
+      </tr>
+    </table>
+
+    <!-- 7. Footer -->
+    <div style="border-top:1px solid #115545; margin-top:14px; padding-top:5px;
+                text-align:center; font-size:0.75rem; color:#555; direction:ltr;">
+      Address - {{ inv.company.address }}
+      {% if inv.company.cr_number %}&nbsp;&nbsp;CR#: {{ inv.company.cr_number }}{% endif %}
+      &nbsp;&nbsp;VAT# {{ inv.company.vat_number }}
+    </div>
+
+  </div>
+</div>
+
+<style>
+.bri  { display:flex; justify-content:space-between; align-items:flex-start; padding:3px 0; gap:4px; direction:rtl; }
+.bal  { font-size:0.82rem; color:#555; white-space:nowrap; min-width:80px; text-align:right; flex-shrink:0; }
+.bv   { font-size:0.82rem; font-weight:600; flex:1; padding:0 6px; text-align:center; word-break:break-word; }
+.bel  { font-size:0.82rem; color:#555; white-space:nowrap; min-width:52px; text-align:left; direction:ltr; flex-shrink:0; }
+.ltrv { direction:ltr; text-align:center; }
+.mar  { padding:4px 8px; color:#555; white-space:nowrap; text-align:right; background:#f5f5f5 !important; }
+.mav  { padding:4px 8px; font-weight:700; text-align:center; background:#f5f5f5 !important; }
+.mae  { padding:4px 8px; color:#555; white-space:nowrap; text-align:left; direction:ltr; background:#f5f5f5 !important; }
+.ith  { border:none !important; vertical-align:top !important; padding:6px 4px !important; }
+.inv-th {
+  background-color: #115545 !important;
+  color: white !important;
+  border-color: #115545 !important;
+}
+.itd  { border:none !important; border-bottom:0.5px solid #ddd !important; padding:5px 4px !important; vertical-align:middle !important; }
+.arsub { font-size:0.74rem; opacity:0.88; margin-top:1px; }
+.tar  { padding:6px 8px; text-align:right; border-bottom:0.5px solid #ddd; }
+.tav  { padding:6px 8px; font-weight:700; text-align:center; border-bottom:0.5px solid #ddd; }
+.tae  { padding:6px 8px; text-align:left; direction:ltr; border-bottom:0.5px solid #ddd; }
+.wlbl { padding:7px 10px; font-weight:700; border-bottom:0.5px solid #ddd; vertical-align:top; }
+thead tr th { vertical-align:top !important; }
+tbody tr:hover td { background:rgba(17,85,69,0.04) !important; }
+
+/* Remove alternating grey from meta rows */
+.mar, .mav, .mae { background:#f5f5f5 !important; }
+table tr:nth-child(even) .mar,
+table tr:nth-child(even) .mav,
+table tr:nth-child(even) .mae { background:#f5f5f5 !important; }
+
+@media (max-width:768px) {
+  .bri { flex-wrap:wrap; }
+  .bal,.bel { min-width:40px; font-size:0.72rem; }
+  table th, table td { font-size:0.70rem !important; padding:2px !important; }
+}
+</style>
+{% endblock %}

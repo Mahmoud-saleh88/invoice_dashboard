@@ -1,0 +1,78 @@
+<!-- templates/invoices/partials/account_row.html -->
+{% load static %}
+
+<tr class="account-row level-{{ level }}">
+    <td>
+        <span class="account-code">{{ account.code }}</span>
+    </td>
+    <td>
+        <span class="account-name">
+            {% if account.account_type == 'header' %}
+            <i class="fas fa-folder"></i>
+            <strong>{{ account.name_ar }}</strong>
+            {% else %}
+            <i class="far fa-file"></i>
+            {{ account.name_ar }}
+            {% endif %}
+        </span>
+    </td>
+    <td>
+        <small class="text-muted">{{ account.name_en }}</small>
+    </td>
+    <td>
+        {% if account.account_type == 'header' %}
+        <span class="badge badge-header">رأسي</span>
+        {% else %}
+        <span class="badge badge-detail">تفصيلي</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if account.account_type == 'detail' %}
+        {% with balance=account.get_balance %}
+        <span class="fw-bold {% if balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {{ balance|floatformat:2 }}
+        </span>
+        {% endwith %}
+        {% else %}
+        <span class="text-muted">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="account-actions">
+            <div class="btn-group btn-group-sm" role="group">
+                <!-- زر كشف الحساب -->
+                {% if account.account_type == 'detail' %}
+                <a href="{% url 'account_statement' account.pk %}" 
+                   class="btn btn-outline-info" 
+                   title="كشف حساب"
+                   data-bs-toggle="tooltip">
+                    <i class="fas fa-list"></i>
+                </a>
+                {% endif %}
+                
+                <!-- زر التعديل -->
+                <a href="{% url 'account_edit' account.pk %}" 
+                   class="btn btn-outline-warning" 
+                   title="تعديل الحساب"
+                   data-bs-toggle="tooltip">
+                    <i class="fas fa-edit"></i>
+                </a>
+                
+                <!-- زر إضافة حساب فرعي (للحسابات الرأسية فقط) -->
+                {% if account.account_type == 'header' %}
+                <a href="{% url 'account_add' %}?parent={{ account.pk }}" 
+                   class="btn btn-outline-success" 
+                   title="إضافة حساب فرعي"
+                   data-bs-toggle="tooltip">
+                    <i class="fas fa-plus"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+</tr>
+
+<!-- عرض الحسابات الفرعية بشكل تكراري -->
+{% for child in account.children.all %}
+    {% include 'invoices/partials/account_row.html' with account=child level=level|add:1 %}
+{% endfor %}

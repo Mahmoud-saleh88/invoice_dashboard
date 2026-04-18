@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}الأصول الثابتة{% endblock %}
+{% block page_title %}الأصول الثابتة{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <span class="badge bg-primary fs-6 px-3">
+      إجمالي الأصول: {{ total_cost|floatformat:2 }} ر.س
+    </span>
+    <span class="badge bg-warning text-dark fs-6 px-3 ms-2">
+      صافي القيمة الدفترية: {{ total_net|floatformat:2 }} ر.س
+    </span>
+  </div>
+  <a href="{% url 'fixed_asset_create' %}" class="btn btn-gold">
+    <i class="fas fa-plus me-1"></i> إضافة أصل ثابت
+  </a>
+</div>
+
+<!-- فلاتر -->
+<div class="data-card mb-4">
+  <div class="p-3">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="بحث باسم الأصل...">
+      </div>
+      <div class="col-md-3">
+        <select name="asset_type" class="form-select form-select-sm">
+          <option value="">كل الأنواع</option>
+          <option value="land" {% if asset_type == 'land' %}selected{% endif %}>أراضي</option>
+          <option value="buildings" {% if asset_type == 'buildings' %}selected{% endif %}>مباني</option>
+          <option value="vehicles" {% if asset_type == 'vehicles' %}selected{% endif %}>مركبات</option>
+          <option value="equipment" {% if asset_type == 'equipment' %}selected{% endif %}>معدات</option>
+          <option value="furniture" {% if asset_type == 'furniture' %}selected{% endif %}>أثاث</option>
+          <option value="scaffolding" {% if asset_type == 'scaffolding' %}selected{% endif %}>سقالات</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button type="submit" class="btn btn-gold btn-sm w-100"><i class="fas fa-search"></i></button>
+      </div>
+      <div class="col-md-1">
+        <a href="{% url 'fixed_assets_list' %}" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-times"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-warehouse me-2"></i> سجل الأصول الثابتة</h6>
+    <span class="badge bg-info text-dark">{{ assets.paginator.count }} أصل</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>اسم الأصل</th>
+          <th>النوع</th>
+          <th>تاريخ الشراء</th>
+          <th class="text-end">التكلفة (ر.س)</th>
+          <th class="text-end">المجمع (ر.س)</th>
+          <th class="text-end">صافي القيمة (ر.س)</th>
+          <th>طريقة الإهلاك</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asset in assets %}
+        <tr>
+          <td>
+            <strong>{{ asset.name }}</strong>
+            {% if asset.asset_number %}
+            <br><small class="text-muted">{{ asset.asset_number }}</small>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge bg-light text-dark">
+              <i class="fas 
+                {% if asset.asset_type == 'vehicles' %}fa-car
+                {% elif asset.asset_type == 'buildings' %}fa-building
+                {% elif asset.asset_type == 'equipment' %}fa-tools
+                {% elif asset.asset_type == 'scaffolding' %}fa-layer-group
+                {% else %}fa-cube{% endif %} me-1"></i>
+              {{ asset.get_asset_type_display }}
+            </span>
+          </td>
+          <td>{{ asset.purchase_date }}</td>
+          <td class="text-end">{{ asset.cost|floatformat:2 }}</td>
+          <td class="text-end text-warning">{{ asset.accumulated_depreciation|floatformat:2 }}</td>
+          <td class="text-end fw-bold" style="color:{% if asset.book_value > 0 %}var(--accent){% else %}#f44336{% endif %}">
+            {{ asset.book_value|floatformat:2 }}
+          </td>
+          <td class="small">{{ asset.get_depreciation_method_display }}</td>
+          <td>
+            <span class="badge {% if asset.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+              {% if asset.is_active %}نشط{% else %}مُستبعد{% endif %}
+            </span>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'fixed_asset_detail' asset.pk %}" class="btn btn-sm btn-outline-primary" title="عرض">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="{% url 'fixed_asset_depreciate' asset.pk %}" class="btn btn-sm btn-outline-warning" title="تسجيل إهلاك">
+                <i class="fas fa-chart-line"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-4">
+            <i class="fas fa-warehouse fa-2x mb-2 d-block opacity-25"></i>
+            لا توجد أصول ثابتة مسجلة
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if assets.has_other_pages %}
+  <div class="p-3 d-flex justify-content-center">
+    <nav><ul class="pagination pagination-sm mb-0">
+      {% if assets.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ assets.previous_page_number }}&q={{ q }}">السابق</a></li>{% endif %}
+      <li class="page-item disabled"><span class="page-link">{{ assets.number }} / {{ assets.paginator.num_pages }}</span></li>
+      {% if assets.has_next %}<li class="page-item"><a class="page-link" href="?page={{ assets.next_page_number }}&q={{ q }}">التالي</a></li>{% endif %}
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

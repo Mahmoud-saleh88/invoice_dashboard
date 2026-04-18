@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="data-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#2e7d32,#388e3c)">
+        <h6><i class="fas fa-hand-holding-usd me-2"></i> {{ title }}</h6>
+      </div>
+      <div class="p-4">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">تاريخ السند <span class="text-danger">*</span></label>
+              {{ form.date }}
+              {% if form.date.errors %}<div class="text-danger small">{{ form.date.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">المبلغ (ر.س) <span class="text-danger">*</span></label>
+              {{ form.amount }}
+              {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">العميل</label>
+              {{ form.client }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">أو اسم المستلم (إن لم يكن عميلاً)</label>
+              {{ form.payer_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">وسيلة الدفع <span class="text-danger">*</span></label>
+              {{ form.payment_method }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">الحساب / الصندوق <span class="text-danger">*</span></label>
+              {{ form.cash_account }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">البيان <span class="text-danger">*</span></label>
+              {{ form.description }}
+              {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">حساب المقابل (الطرف الآخر) <span class="text-danger">*</span></label>
+              {{ form.contra_account }}
+              <div class="form-text">مثال: حساب الإيرادات أو حساب العملاء</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">رقم الشيك / المرجع</label>
+              {{ form.reference_number }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">ملاحظات</label>
+              {{ form.notes }}
+            </div>
+          </div>
+
+          <!-- معاينة السند -->
+          <div class="mt-4 p-3 rounded" style="background:#f8f9fa;border:2px dashed var(--accent)">
+            <div class="text-center mb-2 fw-bold" style="color:var(--accent)">
+              <i class="fas fa-receipt me-1"></i> معاينة سند القبض
+            </div>
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="small text-muted">التاريخ</div>
+                <div id="preview-date" class="fw-bold">—</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">المبلغ</div>
+                <div id="preview-amount" class="fw-bold fs-5 text-success">—</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">وسيلة الدفع</div>
+                <div id="preview-method" class="fw-bold">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end mt-4">
+            <a href="{% url 'receipts_list' %}" class="btn btn-outline-secondary">إلغاء</a>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-save me-1"></i> {{ button_text }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('id_date').addEventListener('change', function() {
+  document.getElementById('preview-date').textContent = this.value || '—';
+});
+document.getElementById('id_amount').addEventListener('input', function() {
+  const v = parseFloat(this.value);
+  document.getElementById('preview-amount').textContent = isNaN(v) ? '—' : v.toLocaleString('ar-SA', {minimumFractionDigits:2}) + ' ر.س';
+});
+document.getElementById('id_payment_method').addEventListener('change', function() {
+  const labels = {cash:'نقدي', bank_transfer:'تحويل بنكي', check:'شيك', other:'أخرى'};
+  document.getElementById('preview-method').textContent = labels[this.value] || '—';
+});
+</script>
+{% endblock %}

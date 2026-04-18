@@ -1,0 +1,149 @@
+<!-- journal_detail.html - CORRECTED VERSION -->
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}القيد رقم {{ entry.number }}{% endblock %}
+{% block page_title %}القيد رقم {{ entry.number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <span class="badge {% if entry.status == 'posted' %}bg-success{% else %}bg-warning text-dark{% endif %} fs-6 px-3 py-2">
+      <i class="fas {% if entry.status == 'posted' %}fa-check-circle{% else %}fa-clock{% endif %} me-1"></i>
+      {{ entry.get_status_display }}
+    </span>
+    <span class="badge bg-secondary ms-2">{{ entry.get_entry_type_display }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'journal_entries_list' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-right me-1"></i> رجوع
+    </a>
+    {% if entry.status == 'posted' %}
+    <a href="{% url 'journal_entry_reverse' entry.pk %}" class="btn btn-outline-warning">
+      <i class="fas fa-undo me-1"></i> عكس القيد
+    </a>
+    {% endif %}
+    {% if entry.status == 'draft' %}
+    <a href="{% url 'journal_entry_post' entry.pk %}" class="btn btn-success">
+      <i class="fas fa-check me-1"></i> ترحيل
+    </a>
+    {% endif %}
+    <button onclick="window.print()" class="btn btn-outline-primary">
+      <i class="fas fa-print me-1"></i> طباعة
+    </button>
+  </div>
+</div>
+
+<!-- بطاقة معلومات القيد -->
+<div class="data-card mb-4">
+  <div class="card-header">
+    <h6><i class="fas fa-file-alt me-2"></i> تفاصيل القيد اليومي</h6>
+    <span class="badge bg-warning text-dark">{{ entry.number }}</span>
+  </div>
+  <div class="p-4">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="text-muted small">رقم القيد</label>
+        <div class="fw-bold fs-5" style="color:var(--accent)">{{ entry.number }}</div>
+      </div>
+      <div class="col-md-3">
+        <label class="text-muted small">التاريخ</label>
+        <div class="fw-bold">{{ entry.date|date:"Y-m-d" }}</div>
+      </div>
+      <div class="col-md-3">
+        <label class="text-muted small">أنشئ بواسطة</label>
+        <div class="fw-bold">{{ entry.created_by.get_full_name|default:entry.created_by.username }}</div>
+      </div>
+      <div class="col-md-3">
+        <label class="text-muted small">تاريخ الإنشاء</label>
+        <div class="fw-bold">{{ entry.created_at|date:"Y-m-d H:i" }}</div>
+      </div>
+      <div class="col-12">
+        <label class="text-muted small">البيان</label>
+        <div class="fw-bold fs-6">{{ entry.description }}</div>
+      </div>
+      {% if entry.reference %}
+      <div class="col-md-4">
+        <label class="text-muted small">المرجع</label>
+        <div class="fw-bold">{{ entry.reference }}</div>
+      </div>
+      {% endif %}
+      {% if entry.notes %}
+      <div class="col-12">
+        <label class="text-muted small">ملاحظات</label>
+        <div>{{ entry.notes }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- بنود القيد -->
+<div class="data-card mb-4">
+  <div class="card-header">
+    <h6><i class="fas fa-list me-2"></i> بنود القيد (اليومية الأمريكية)</h6>
+    <span class="badge {% if is_balanced %}bg-success{% else %}bg-danger{% endif %}">
+      {% if is_balanced %}✓ متوازن{% else %}✗ غير متوازن{% endif %}
+    </span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th style="width:40px">#</th>
+          <th>كود الحساب</th>
+          <th>اسم الحساب</th>
+          <th>البيان</th>
+          <th>مركز التكلفة</th>
+          <th class="text-end" style="color:#4CAF50">مدين (ر.س)</th>
+          <th class="text-end" style="color:#f44336">دائن (ر.س)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in entry.lines.all %}
+        <tr>
+          <td class="text-muted">{{ forloop.counter }}</td>
+          <td><code>{{ line.account.code }}</code></td>
+          <td>
+            <strong>{{ line.account.name_ar }}</strong>
+            {% if line.debit_amount > 0 %}
+            <span class="badge bg-success bg-opacity-10 text-success ms-1" style="font-size:0.7rem">مدين</span>
+            {% elif line.credit_amount > 0 %}
+            <span class="badge bg-danger bg-opacity-10 text-danger ms-1" style="font-size:0.7rem">دائن</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ line.description|default:"—" }}</td>
+          <td>{{ line.cost_center.name_ar|default:"—" }}</td>
+          <td class="text-end fw-bold" style="color:#4CAF50">
+            {% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end fw-bold" style="color:#f44336">
+            {% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">لا توجد بنود</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot style="background:var(--secondary);color:#fff">
+        <tr>
+          <td colspan="5" class="fw-bold text-center">الإجمالي</td>
+          <td class="text-end fw-bold fs-6" style="color:#4CAF50">{{ total_debit|floatformat:2 }}</td>
+          <td class="text-end fw-bold fs-6" style="color:#f44336">{{ total_credit|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- التوازن -->
+<!-- التوازن -->
+{% if not is_balanced %}
+<div class="alert alert-danger">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  <strong>تحذير:</strong> القيد غير متوازن! 
+  الفرق: {{ difference|floatformat:2 }} ر.س
+</div>
+{% endif %}
+{% endblock %}

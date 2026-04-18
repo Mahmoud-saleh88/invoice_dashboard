@@ -1,0 +1,161 @@
+<!-- account_ledger.html - كشف حساب -->
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}كشف حساب {{ account.name_ar }}{% endblock %}
+{% block page_title %}كشف حساب{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-0">
+      <span style="color:var(--accent)">{{ account.code }}</span> - {{ account.name_ar }}
+    </h4>
+    <small class="text-muted">{{ account.name_en }}</small>
+  </div>
+  <div>
+    <a href="{% url 'chart_of_accounts' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-right me-1"></i> دليل الحسابات
+    </a>
+  </div>
+</div>
+
+<!-- فلتر التاريخ -->
+<div class="data-card mb-4">
+  <div class="card-header">
+    <h6><i class="fas fa-calendar me-2"></i> الفترة</h6>
+  </div>
+  <div class="p-3">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">من تاريخ</label>
+        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">إلى تاريخ</label>
+        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-gold">
+          <i class="fas fa-filter me-1"></i> عرض
+        </button>
+        <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-outline-success">
+          <i class="fas fa-file-excel me-1"></i> تصدير Excel
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-primary">
+          <i class="fas fa-print"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ملخص الحساب -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="icon-box" style="background:#e3f2fd">
+        <i class="fas fa-door-open text-primary"></i>
+      </div>
+      <div class="value">{{ opening_balance|floatformat:2 }}</div>
+      <div class="label">الرصيد الافتتاحي</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="icon-box" style="background:#e8f5e9">
+        <i class="fas fa-arrow-down text-success"></i>
+      </div>
+      <div class="value text-success">{{ total_debit|floatformat:2 }}</div>
+      <div class="label">إجمالي مدين</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="icon-box" style="background:#fce4ec">
+        <i class="fas fa-arrow-up text-danger"></i>
+      </div>
+      <div class="value text-danger">{{ total_credit|floatformat:2 }}</div>
+      <div class="label">إجمالي دائن</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="icon-box" style="background:#fff3e0">
+        <i class="fas fa-balance-scale text-warning"></i>
+      </div>
+      <div class="value {% if closing_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ closing_balance|floatformat:2 }}
+      </div>
+      <div class="label">الرصيد الختامي ({{ balance_type }})</div>
+    </div>
+  </div>
+</div>
+
+<!-- كشف الحركات -->
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-list me-2"></i> حركات الحساب</h6>
+    <span class="badge bg-secondary">{{ entries|length }} حركة</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>رقم القيد</th>
+          <th>البيان</th>
+          <th class="text-end">مدين (ر.س)</th>
+          <th class="text-end">دائن (ر.س)</th>
+          <th class="text-end">الرصيد (ر.س)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="table-light">
+          <td colspan="5" class="fw-bold">الرصيد الافتتاحي</td>
+          <td class="text-end fw-bold">{{ opening_balance|floatformat:2 }}</td>
+        </tr>
+        {% for entry in entries %}
+        <tr>
+          <td>{{ entry.date|date:"Y-m-d" }}</td>
+          <td>
+            <a href="{% url 'journal_entry_detail' entry.entry_id %}" class="text-decoration-none" style="color:var(--accent)">
+              {{ entry.entry_number }}
+            </a>
+          </td>
+          <td>{{ entry.description }}</td>
+          <td class="text-end text-success">
+            {% if entry.debit > 0 %}{{ entry.debit|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end text-danger">
+            {% if entry.credit > 0 %}{{ entry.credit|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="text-end fw-bold {% if entry.running_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {{ entry.running_balance|floatformat:2 }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">
+            لا توجد حركات في هذه الفترة
+          </td>
+        </tr>
+        {% endfor %}
+        <tr class="table-light fw-bold">
+          <td colspan="3" class="text-center">الإجمالي</td>
+          <td class="text-end text-success">{{ total_debit|floatformat:2 }}</td>
+          <td class="text-end text-danger">{{ total_credit|floatformat:2 }}</td>
+          <td class="text-end">{{ closing_balance|floatformat:2 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+@media print {
+  #sidebar, .topbar, .d-flex.justify-content-between, form, .btn { display: none !important; }
+  #main-content { margin: 0 !important; }
+  .data-card { box-shadow: none !important; border: 1px solid #ccc !important; }
+}
+</style>
+{% endblock %}

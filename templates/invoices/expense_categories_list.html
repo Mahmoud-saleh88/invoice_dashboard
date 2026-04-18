@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}أوجه الصرف{% endblock %}
+{% block page_title %}أوجه الصرف{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-4">
+  <a href="{% url 'expense_category_create' %}" class="btn btn-gold">
+    <i class="fas fa-plus me-1"></i> إضافة وجه صرف
+  </a>
+</div>
+
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-tags me-2"></i> أوجه الصرف</h6>
+    <span class="badge bg-info text-dark">{{ categories|length }} وجه صرف</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>اسم وجه الصرف</th>
+          <th>الاسم الإنجليزي</th>
+          <th>الحساب المرتبط</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td><strong>{{ cat.name_ar }}</strong></td>
+          <td class="text-muted">{{ cat.name|default:"—" }}</td>
+          <td class="small">
+            {% if cat.account %}
+            <code>{{ cat.account.code }}</code> - {{ cat.account.name_ar }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="badge {% if cat.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+              {% if cat.is_active %}نشط{% else %}غير نشط{% endif %}
+            </span>
+          </td>
+          <td>
+            <a href="{% url 'expense_category_edit' cat.pk %}" class="btn btn-sm btn-outline-warning">
+              <i class="fas fa-edit"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">لا توجد أوجه صرف. <a href="{% url 'expense_category_create' %}">أضف واحدة</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

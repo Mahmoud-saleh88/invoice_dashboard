@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block title %}الفواتير الالكترونية{% endblock %}
+{% block page_title %}الفواتير الالكترونية{% endblock %}
+
+{% block content %}
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-arrow-up me-2"></i>قائمة الفواتير الالكترونية</h6>
+    <a href="{% url 'sales_add' %}" class="btn btn-sm btn-gold"><i class="fas fa-plus me-1"></i>إضافة فاتورة</a>
+  </div>
+  
+  <!-- Search Container with Advanced Search Collapse -->
+  <div class="p-3 border-bottom">
+    <!-- Main Search Bar -->
+    <form method="get" id="search-form">
+      <div class="row g-2">
+        <div class="col-md-8">
+          <div class="search-box">
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="بحث بالعميل أو رقم الفاتورة...">
+            <i class="fas fa-search"></i>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-dark-main" style="flex: 1;">
+              <i class="fas fa-search"></i>
+              <span class="d-none d-sm-inline ms-1">بحث</span>
+            </button>
+            {% if q or date_from or date_to or transaction_type or client_id %}
+            <a href="{% url 'sales_list' %}" class="btn btn-outline-secondary" style="flex: 1;">
+              <i class="fas fa-times"></i>
+              <span class="d-none d-sm-inline ms-1">مسح الكل</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Advanced Search Toggle Link - Now on the Right -->
+    <div class="mt-2 text-end">
+      <a class="advanced" 
+         data-bs-toggle="collapse" 
+         href="#collapseAdvancedSearch" 
+         role="button" 
+         aria-expanded="false" 
+         aria-controls="collapseAdvancedSearch">
+        بحث متقدم <i class="fas fa-angle-down"></i>
+      </a>
+    </div>
+
+    <!-- Advanced Search Collapse - Inside the same container -->
+    <div class="collapse mt-3" id="collapseAdvancedSearch">
+      <div class="card card-body" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+        <form method="GET" action="." class="filter-form" id="advancedFilterForm">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">من تاريخ</label>
+              <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">إلى تاريخ</label>
+              <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">نوع المعاملة</label>
+              <select name="transaction_type" class="form-select">
+                <option value="">الكل</option>
+                <option value="invoice" {% if transaction_type == 'invoice' %}selected{% endif %}>Invoice</option>
+                <option value="credit" {% if transaction_type == 'credit' %}selected{% endif %}>Credit Note</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">العميل</label>
+              <select name="client" class="form-select">
+                <option value="">الكل</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}" {% if client_id|stringformat:"s" == client.id|stringformat:"s" %}selected{% endif %}>{{ client.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> بحث متقدم
+              </button>
+              <a href="{% url 'sales_list' %}" class="btn btn-secondary">
+                <i class="fas fa-undo"></i> إعادة تهيئة
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Second Row: Page Size Selector (Left) and Excel Button (Right) -->
+  <div class="p-3 bg-light border-bottom">
+    <div class="d-flex justify-content-between align-items-center">
+      <!-- Page Size Selector - Left Side -->
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">عدد الصفوف:</span>
+        <select name="page_size" class="form-select form-select-sm" style="width: auto; min-width: 110px;" onchange="changePageSize(this.value)">
+          <option value="10" {% if page_size == 10 %}selected{% endif %}>10 فاتورة</option>
+          <option value="25" {% if page_size == 25 %}selected{% endif %}>25 فاتورة</option>
+          <option value="50" {% if page_size == 50 %}selected{% endif %}>50 فاتورة</option>
+          <option value="100" {% if page_size == 100 %}selected{% endif %}>100 فاتورة</option>
+        </select>
+      </div>
+      
+      <!-- Excel Export Button - Right Side -->
+      <a href="#" 
+         class="btn btn-success btn-sm" 
+         id="exportExcelBtn"
+         style="background-color: #28a745; border-color: #28a745;">
+        <i class="fas fa-file-excel"></i>
+        <span class="d-none d-sm-inline ms-1">تصدير Excel</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Table - Responsive -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th class="text-center">رقم الفاتورة</th>
+          <th class="text-center">التاريخ</th>
+          <th class="text-center">نوع المعاملة</th>
+          <th class="text-center">العميل</th>
+          <th class="text-center">الكمية</th>
+          <th class="text-center">إجمالي المبيعات بدون ضريبة</th>
+          <th class="text-center">الضريبة %</th>
+          <th class="text-center">الضريبة</th>
+          <th class="text-center">المجموع</th>
+          <th class="text-center" style="min-width: 130px;">إجراءات</th>
+         </tr>
+      </thead>
+      <tbody>
+      {% for inv in invoices %}
+        <tr>
+          <td class="text-center"><span class="badge-invoice">{{ inv.invoice_number }}</span></td>
+          <td class="text-center">{{ inv.date|date:"Y-m-d" }}</td>
+          <td class="text-center">{{ inv.get_transaction_type_display }}</td>
+          <td>{{ inv.client.name|truncatechars:40 }}</td>
+          <td class="text-center">{{ inv.total_quantity }}</td>
+          <td class="text-center">{{ inv.total_sales_excl_tax|floatformat:2 }}</td>
+          <td class="text-center">{{ inv.tax_rate }}%</td>
+          <td class="text-center text-danger">{{ inv.total_tax|floatformat:2 }}</td>
+          <td class="text-center"><strong>{{ inv.total|floatformat:2 }}</strong></td>
+          <td class="text-center">
+            <div class="d-flex gap-1 justify-content-center">
+              <a href="{% url 'sales_detail' inv.pk %}" class="btn btn-sm btn-outline-primary" title="عرض">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="{% url 'sales_pdf' inv.pk %}" class="btn btn-sm btn-gold" title="تحميل PDF">
+                <i class="fas fa-file-pdf"></i>
+              </a>
+              <a href="{% url 'sales_edit' inv.pk %}" class="btn btn-sm btn-outline-warning" title="تعديل">
+                <i class="fas fa-edit"></i>
+              </a>
+              <a href="{% url 'sales_delete' inv.pk %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                <i class="fas fa-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="10" class="text-center text-muted py-5">
+            <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i><br>
+            لا توجد فواتير الكترونية
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      
+      <!-- Total Row -->
+      {% if invoices %}
+      <tfoot class="table-light">
+        <tr>
+          <td colspan="8" class="text-start fw-bold">الإجمالي المعروض</td>
+          <td colspan="2" class="text-end fw-bold">{{ total|floatformat:2 }} ر.س</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+
+  <!-- Pagination Section - Always show info even for single page -->
+  <div class="p-3 border-top">
+    <!-- Mobile layout (stacked) -->
+    <div class="d-flex flex-column d-md-none gap-3">
+      <div class="d-flex justify-content-between">
+        <div class="text-muted small">
+          عرض {{ start_index }} - {{ end_index }} من أصل {{ total_count }} فاتورة
+        </div>
+        <div class="text-muted small">
+          صفحة {{ current_page }} من {{ total_pages }}
+        </div>
+      </div>
+      
+      <!-- Pagination for mobile - only show if more than one page -->
+      {% if paginator.num_pages > 1 %}
+      <div class="table-responsive">
+        <nav aria-label="Page navigation">
+          <ul class="pagination pagination-sm justify-content-center flex-nowrap">
+            <li class="page-item {% if not invoices.has_previous %}disabled{% endif %}">
+              <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            <li class="page-item {% if not invoices.has_previous %}disabled{% endif %}">
+              <a class="page-link" href="?page={% if invoices.has_previous %}{{ invoices.previous_page_number }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item active">
+              <span class="page-link">{{ current_page }}</span>
+            </li>
+            <li class="page-item {% if not invoices.has_next %}disabled{% endif %}">
+              <a class="page-link" href="?page={% if invoices.has_next %}{{ invoices.next_page_number }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            <li class="page-item {% if not invoices.has_next %}disabled{% endif %}">
+              <a class="page-link" href="?page={{ total_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+    
+    <!-- Desktop layout -->
+    <div class="d-none d-md-flex justify-content-between align-items-center">
+      <div class="text-muted small">
+        الصفحة {{ current_page }} من {{ total_pages }}
+      </div>
+      
+      <!-- Pagination in the middle - only show if more than one page -->
+      {% if paginator.num_pages > 1 %}
+      <nav aria-label="Page navigation">
+        <ul class="pagination mb-0">
+          <li class="page-item {% if not invoices.has_previous %}disabled{% endif %}">
+            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
+          </li>
+          <li class="page-item {% if not invoices.has_previous %}disabled{% endif %}">
+            <a class="page-link" href="?page={% if invoices.has_previous %}{{ invoices.previous_page_number }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-right"></i>
+            </a>
+          </li>
+          
+          {% for i in page_range %}
+            {% if i == '...' %}
+              <li class="page-item disabled">
+                <span class="page-link">...</span>
+              </li>
+            {% else %}
+              <li class="page-item {% if current_page == i %}active{% endif %}">
+                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          
+          <li class="page-item {% if not invoices.has_next %}disabled{% endif %}">
+            <a class="page-link" href="?page={% if invoices.has_next %}{{ invoices.next_page_number }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          </li>
+          <li class="page-item {% if not invoices.has_next %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ total_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+      
+      <div class="text-muted small">
+        عرض {{ start_index }} - {{ end_index }} من أصل {{ total_count }} فاتورة
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Function to change page size and submit
+function changePageSize(size) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page_size', size);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
+
+// Handle export button click
+document.getElementById('exportExcelBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    var currentUrl = new URL(window.location.href);
+    var params = new URLSearchParams(currentUrl.search);
+    params.delete('page');
+    params.delete('page_size');
+    var exportUrl = "{% url 'sales_export' %}?" + params.toString();
+    window.location.href = exportUrl;
+});
+
+// Initialize Bootstrap collapse
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if there are any active filters and expand the collapse
+    var hasFilters = {% if date_from or date_to or transaction_type or client_id %}true{% else %}false{% endif %};
+    
+    if (hasFilters) {
+        var collapseElement = document.getElementById('collapseAdvancedSearch');
+        if (collapseElement) {
+            var bsCollapse = new bootstrap.Collapse(collapseElement, {
+                show: true
+            });
+        }
+    }
+});
+</script>
+
+<style>
+  /* Make search and clear buttons same size */
+  .btn-dark-main, .btn-outline-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  
+  /* Pagination styling */
+  .pagination {
+    gap: 3px;
+  }
+  .pagination .page-link {
+    border-radius: 6px !important;
+    margin: 0;
+    min-width: 36px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 0.375rem 0.5rem;
+  }
+  .pagination .page-link:hover {
+    background-color: #f8f9fa;
+    border-color: #c1c9d0;
+    color: #212529;
+  }
+  .pagination .active .page-link {
+    background: linear-gradient(135deg, #C9A84C, #b89638);
+    border-color: #C9A84C;
+    color: white;
+  }
+  .pagination .disabled .page-link {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    pointer-events: none;
+  }
+  
+  /* Search box styling */
+  .search-box {
+    position: relative;
+  }
+  .search-box i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #adb5bd;
+    pointer-events: none;
+  }
+  
+  /* RTL support for search icon */
+  [dir="rtl"] .search-box i {
+    right: auto;
+    left: 15px;
+  }
+  
+  /* Table styling */
+  .table {
+    margin-bottom: 0;
+  }
+  
+  .table th, .table td {
+    vertical-align: middle;
+  }
+  
+  .table-bordered {
+    border: 1px solid #dee2e6;
+  }
+  
+  .table-bordered th,
+  .table-bordered td {
+    border: 1px solid #dee2e6;
+  }
+  
+  .table-light {
+    background-color: #f8f9fa !important;
+  }
+  
+  /* Card header styling */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  /* Advanced search link styling */
+  .advanced {
+    color: #0f0f1e;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .advanced:hover {
+    color: #b89638;
+    text-decoration: underline;
+  }
+  
+  /* Badge styling */
+  .badge-invoice {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .table td, .table th {
+      padding: 0.5rem 0.25rem;
+      font-size: 0.85rem;
+    }
+    .btn-sm {
+      padding: 0.2rem 0.3rem;
+    }
+    .pagination .page-link {
+      min-width: 32px;
+      padding: 0.25rem 0.4rem;
+      font-size: 0.85rem;
+    }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-9 col-lg-11">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{% url 'supplier_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-right me-1"></i> الموردون
+      </a>
+      <span class="text-muted small">/</span>
+      <span class="text-muted small">{{ title }}</span>
+    </div>
+
+    <div class="data-card">
+      <div class="card-header">
+        <h6>
+          <i class="fas {% if supplier %}fa-edit{% else %}fa-truck{% endif %} me-2"></i>
+          {{ title }}
+        </h6>
+      </div>
+
+      <div class="p-4">
+        <form method="POST" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger mb-4" style="border-radius:10px">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Section: البيانات الأساسية -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-building me-2" style="color:var(--accent)"></i>
+              البيانات الأساسية
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">اسم المورد (عربي) <span class="text-danger">*</span></label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Supplier Name (English)</label>
+                {{ form.name_en }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">الرقم الضريبي (VAT)</label>
+                {{ form.vat_number }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">السجل التجاري</label>
+                {{ form.cr_number }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">البريد الإلكتروني</label>
+                {{ form.email }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">رقم الهاتف</label>
+                {{ form.phone }}
+              </div>
+              <div class="col-md-12">
+                <label class="form-label">العنوان</label>
+                {{ form.address }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <a href="{% url 'supplier_list' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-save me-1"></i> {{ button_text }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

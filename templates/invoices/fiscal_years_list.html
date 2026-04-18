@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}السنوات المالية{% endblock %}
+{% block page_title %}السنوات المالية{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-4">
+  <a href="{% url 'fiscal_year_add' %}" class="btn btn-gold">
+    <i class="fas fa-plus me-1"></i> سنة مالية جديدة
+  </a>
+</div>
+
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-calendar-alt me-2"></i> السنوات المالية</h6>
+    <span class="badge bg-info text-dark">{{ fiscal_years|length }} سنة</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>السنة المالية</th>
+          <th>تاريخ البدء</th>
+          <th>تاريخ الانتهاء</th>
+          <th>الحالة</th>
+          <th>تاريخ الإقفال</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fy in fiscal_years %}
+        <tr>
+          <td>
+            <strong>{{ fy.name }}</strong>
+            {% if not fy.is_closed %}
+            <span class="badge bg-success ms-1">نشطة</span>
+            {% endif %}
+          </td>
+          <td>{{ fy.start_date }}</td>
+          <td>{{ fy.end_date }}</td>
+          <td>
+            <span class="badge {% if fy.is_closed %}bg-secondary{% else %}bg-success{% endif %}">
+              {% if fy.is_closed %}مقفلة{% else %}مفتوحة{% endif %}
+            </span>
+          </td>
+          <td>{{ fy.closed_at|date:"Y-m-d"|default:"—" }}</td>
+          <td>
+            {% if not fy.is_closed %}
+            <a href="{% url 'fiscal_year_close_confirm' fy.pk %}"
+               class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('هل تريد إقفال السنة المالية {{ fy.name }}؟ هذا الإجراء لا يمكن التراجع عنه.')">
+              <i class="fas fa-lock me-1"></i> إقفال
+            </a>
+            {% else %}
+            <span class="text-muted small"><i class="fas fa-lock me-1"></i>تم الإقفال</span>
+            {% endif %}
+          </td>
+          <!-- Add these action buttons to each row -->
+<td>
+    <div class="btn-group btn-group-sm">
+        <a href="{% url 'fiscal_year_detail' fy.pk %}" class="btn btn-outline-info" title="تفاصيل">
+            <i class="fas fa-eye"></i>
+        </a>
+        {% if not fy.is_closed %}
+        <a href="{% url 'fiscal_year_edit' fy.pk %}" class="btn btn-outline-warning" title="تعديل">
+            <i class="fas fa-edit"></i>
+        </a>
+        <a href="{% url 'fiscal_year_close_confirm' fy.pk %}" class="btn btn-outline-primary" title="إغلاق">
+            <i class="fas fa-lock"></i>
+        </a>
+        {% endif %}
+        <a href="{% url 'fiscal_year_delete' fy.pk %}" class="btn btn-outline-danger" title="حذف"
+           onclick="return confirm('هل أنت متأكد من حذف هذه السنة المالية؟')">
+            <i class="fas fa-trash"></i>
+        </a>
+    </div>
+</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">
+            <i class="fas fa-calendar-times fa-2x mb-2 d-block opacity-25"></i>
+            لا توجد سنوات مالية.
+            <a href="{% url 'fiscal_year_add' %}">أضف سنة مالية</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
