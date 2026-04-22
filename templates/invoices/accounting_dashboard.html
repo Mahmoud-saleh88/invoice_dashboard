@@ -4,158 +4,434 @@
 {% block title %}لوحة تحكم المحاسبة{% endblock %}
 {% block page_title %}لوحة تحكم المحاسبة{% endblock %}
 
+{% block extra_css %}
+<style>
+
+/* ════════════════════════════════════════
+   بطاقات الإحصاء الحديثة
+════════════════════════════════════════ */
+.kpi-card {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1),
+              box-shadow 0.3s ease;
+  cursor: default;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.kpi-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 32px rgba(0,0,0,0.12);
+}
+
+/* شريط لوني علوي */
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: 16px 16px 0 0;
+}
+.kpi-card.kpi-blue::before   { background: linear-gradient(90deg, #4285f4, #0d47a1); }
+.kpi-card.kpi-red::before    { background: linear-gradient(90deg, #ea4335, #b71c1c); }
+.kpi-card.kpi-green::before  { background: linear-gradient(90deg, #34a853, #1b5e20); }
+.kpi-card.kpi-purple::before { background: linear-gradient(90deg, #7c3aed, #4a148c); }
+.kpi-card.kpi-orange::before { background: linear-gradient(90deg, #f9a825, #e65100); }
+.kpi-card.kpi-teal::before   { background: linear-gradient(90deg, #00bcd4, #006064); }
+.kpi-card.kpi-indigo::before { background: linear-gradient(90deg, #3f51b5, #1a237e); }
+.kpi-card.kpi-gold::before   { background: linear-gradient(90deg, #C9A84C, #8B6914); }
+
+/* أيقونة دائرية */
+.kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+.kpi-card:hover .kpi-icon { transform: rotate(-8deg) scale(1.1); }
+
+.kpi-blue   .kpi-icon { background: #e8f0fe; color: #4285f4; }
+.kpi-red    .kpi-icon { background: #fce8e8; color: #ea4335; }
+.kpi-green  .kpi-icon { background: #e6f4ea; color: #34a853; }
+.kpi-purple .kpi-icon { background: #f0e8fe; color: #7c3aed; }
+.kpi-orange .kpi-icon { background: #fef3e2; color: #f9a825; }
+.kpi-teal   .kpi-icon { background: #e0f7fa; color: #00bcd4; }
+.kpi-indigo .kpi-icon { background: #e8eaf6; color: #3f51b5; }
+.kpi-gold   .kpi-icon { background: #fff8e1; color: #C9A84C; }
+
+/* النص */
+.kpi-body { flex: 1; }
+.kpi-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* صف العنوان */
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+/* شارة الاتجاه */
+.kpi-badge {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+.kpi-badge.up   { background: #e6f4ea; color: #1b5e20; }
+.kpi-badge.down { background: #fce8e8; color: #b71c1c; }
+.kpi-badge.neutral { background: #f1f3f5; color: #495057; }
+
+/* خلفية زخرفية */
+.kpi-card .kpi-bg-icon {
+  position: absolute;
+  bottom: -8px;
+  left: -8px;
+  font-size: 4rem;
+  opacity: 0.04;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+.kpi-card:hover .kpi-bg-icon {
+  opacity: 0.07;
+  transform: scale(1.1) rotate(-10deg);
+}
+
+/* animation دخول */
+@keyframes kpiEntrance {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.kpi-card { animation: kpiEntrance 0.4s ease both; }
+.kpi-card:nth-child(1) { animation-delay: 0.05s; }
+.kpi-card:nth-child(2) { animation-delay: 0.10s; }
+.kpi-card:nth-child(3) { animation-delay: 0.15s; }
+.kpi-card:nth-child(4) { animation-delay: 0.20s; }
+.kpi-card:nth-child(5) { animation-delay: 0.25s; }
+.kpi-card:nth-child(6) { animation-delay: 0.30s; }
+.kpi-card:nth-child(7) { animation-delay: 0.35s; }
+
+/* ── قسم الوصول السريع ── */
+.quick-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 10px;
+  border-radius: 12px;
+  border: 1.5px solid #e9ecef;
+  background: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #495057;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  text-align: center;
+  min-height: 80px;
+}
+.quick-link i {
+  font-size: 1.4rem;
+  transition: transform 0.25s ease;
+}
+.quick-link:hover {
+  border-color: var(--accent);
+  background: #fff8e1;
+  color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(201,168,76,0.15);
+  text-decoration: none;
+}
+.quick-link:hover i { transform: scale(1.2); }
+
+/* ── جدول القيود ── */
+.entries-table th {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 10px 14px;
+  border-bottom: 2px solid #e9ecef;
+  white-space: nowrap;
+}
+.entries-table td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f3f5;
+  font-size: 0.85rem;
+}
+.entries-table tbody tr { transition: background 0.15s; }
+.entries-table tbody tr:hover { background: #f8f9fa; }
+
+</style>
+{% endblock %}
+
 {% block content %}
 
-<!-- ── إحصائيات المالية ── -->
+<!-- ── صف 1: المؤشرات المالية الرئيسية ── -->
 <div class="row g-3 mb-3">
+
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#e3f2fd">
-        <i class="fas fa-university text-primary fs-4"></i>
+    <div class="kpi-card kpi-blue">
+      <i class="fas fa-university kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-university"></i></div>
+        <span class="kpi-badge neutral">الأصول</span>
       </div>
-      <div class="value">{{ total_assets|floatformat:2 }}</div>
-      <div class="label">إجمالي الأصول (ر.س)</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ total_assets|floatformat:0 }}</div>
+        <div class="kpi-label">إجمالي الأصول (ر.س)</div>
+      </div>
     </div>
   </div>
+
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#fce4ec">
-        <i class="fas fa-hand-holding-usd text-danger fs-4"></i>
+    <div class="kpi-card kpi-red">
+      <i class="fas fa-hand-holding-usd kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-hand-holding-usd"></i></div>
+        <span class="kpi-badge down">الالتزامات</span>
       </div>
-      <div class="value">{{ total_liab|floatformat:2 }}</div>
-      <div class="label">إجمالي الالتزامات (ر.س)</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ total_liab|floatformat:0 }}</div>
+        <div class="kpi-label">إجمالي الالتزامات (ر.س)</div>
+      </div>
     </div>
   </div>
+
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#e8f5e9">
-        <i class="fas fa-balance-scale text-success fs-4"></i>
+    <div class="kpi-card kpi-green">
+      <i class="fas fa-balance-scale kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-balance-scale"></i></div>
+        <span class="kpi-badge up">حقوق الملكية</span>
       </div>
-      <div class="value">{{ total_equity|floatformat:2 }}</div>
-      <div class="label">حقوق الملكية (ر.س)</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ total_equity|floatformat:0 }}</div>
+        <div class="kpi-label">حقوق الملكية (ر.س)</div>
+      </div>
     </div>
   </div>
+
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#f3e5f5">
-        <i class="fas fa-arrow-trend-up text-success fs-4"></i>
+    <div class="kpi-card {% if net_income >= 0 %}kpi-green{% else %}kpi-red{% endif %}">
+      <i class="fas fa-chart-line kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <span class="kpi-badge {% if net_income >= 0 %}up{% else %}down{% endif %}">
+          {% if net_income >= 0 %}ربح{% else %}خسارة{% endif %}
+        </span>
       </div>
-      <div class="value text-success">{{ total_rev|floatformat:2 }}</div>
-      <div class="label">الإيرادات (ر.س)</div>
+      <div class="kpi-body">
+        <div class="kpi-value {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">
+          {{ net_income|floatformat:0 }}
+        </div>
+        <div class="kpi-label">صافي {% if net_income >= 0 %}الربح{% else %}الخسارة{% endif %} (ر.س)</div>
+      </div>
     </div>
   </div>
+
 </div>
 
+<!-- ── صف 2: الإيرادات والمصروفات والتنبيهات ── -->
 <div class="row g-3 mb-4">
+
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#fff3e0">
-        <i class="fas fa-arrow-trend-down text-warning fs-4"></i>
+    <div class="kpi-card kpi-teal">
+      <i class="fas fa-arrow-trend-up kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-arrow-trend-up"></i></div>
+        <span class="kpi-badge up">إيرادات</span>
       </div>
-      <div class="value text-danger">{{ total_exp|floatformat:2 }}</div>
-      <div class="label">المصروفات (ر.س)</div>
+      <div class="kpi-body">
+        <div class="kpi-value text-success">{{ total_rev|floatformat:0 }}</div>
+        <div class="kpi-label">إجمالي الإيرادات (ر.س)</div>
+      </div>
     </div>
   </div>
+
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:{% if net_income >= 0 %}#e8f5e9{% else %}#fce4ec{% endif %}">
-        <i class="fas fa-chart-line {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %} fs-4"></i>
+    <div class="kpi-card kpi-orange">
+      <i class="fas fa-arrow-trend-down kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-arrow-trend-down"></i></div>
+        <span class="kpi-badge down">مصروفات</span>
       </div>
-      <div class="value {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ net_income|floatformat:2 }}
+      <div class="kpi-body">
+        <div class="kpi-value text-danger">{{ total_exp|floatformat:0 }}</div>
+        <div class="kpi-label">إجمالي المصروفات (ر.س)</div>
       </div>
-      <div class="label">صافي {% if net_income >= 0 %}الربح{% else %}الخسارة{% endif %} (ر.س)</div>
     </div>
   </div>
+
   <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="d-flex justify-content-between align-items-start">
-        <div class="icon-box" style="background:#fff8e1">
-          <i class="fas fa-file-invoice-dollar text-warning fs-4"></i>
-        </div>
+    <div class="kpi-card kpi-gold">
+      <i class="fas fa-file-invoice-dollar kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-file-invoice-dollar"></i></div>
         {% if unposted_sales > 0 %}
-        <a href="{% url 'sales_list' %}" class="btn btn-sm btn-gold">عرض</a>
+          <a href="{% url 'sales_list' %}" class="kpi-badge down" style="text-decoration:none;">
+            عرض ←
+          </a>
+        {% else %}
+          <span class="kpi-badge neutral">ZATCA</span>
         {% endif %}
       </div>
-      <div class="value">{{ unposted_sales }}</div>
-      <div class="label">مبيعات في الانتظار (ZATCA)</div>
-    </div>
-  </div>
-  <div class="col-md-3 col-sm-6">
-    <div class="stat-card">
-      <div class="d-flex justify-content-between align-items-start">
-        <div class="icon-box" style="background:#fce4ec">
-          <i class="fas fa-file-import text-danger fs-4"></i>
+      <div class="kpi-body">
+        <div class="kpi-value {% if unposted_sales > 0 %}text-warning{% endif %}">
+          {{ unposted_sales }}
         </div>
+        <div class="kpi-label">مبيعات في انتظار زاتكا</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6">
+    <div class="kpi-card kpi-red">
+      <i class="fas fa-file-import kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-file-import"></i></div>
         {% if unposted_purchases > 0 %}
-        <a href="{% url 'purchases_list' %}" class="btn btn-sm btn-gold">عرض</a>
+          <a href="{% url 'purchases_list' %}" class="kpi-badge down" style="text-decoration:none;">
+            عرض ←
+          </a>
+        {% else %}
+          <span class="kpi-badge neutral">مشتريات</span>
         {% endif %}
       </div>
-      <div class="value">{{ unposted_purchases }}</div>
-      <div class="label">مشتريات غير مسددة</div>
+      <div class="kpi-body">
+        <div class="kpi-value {% if unposted_purchases > 0 %}text-danger{% endif %}">
+          {{ unposted_purchases }}
+        </div>
+        <div class="kpi-label">مشتريات غير مسددة</div>
+      </div>
     </div>
   </div>
+
 </div>
 
-<!-- ── إحصائيات دليل الحسابات ── -->
+<!-- ── صف 3: إحصاء القيود ── -->
 <div class="row g-3 mb-4">
+
   <div class="col-md-4 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#e8eaf6">
-        <i class="fas fa-sitemap" style="color:#3f51b5"></i>
+    <div class="kpi-card kpi-indigo">
+      <i class="fas fa-sitemap kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-sitemap"></i></div>
+        <span class="kpi-badge neutral">دليل الحسابات</span>
       </div>
-      <div class="value">{{ total_accounts }}</div>
-      <div class="label">إجمالي الحسابات</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ total_accounts }}</div>
+        <div class="kpi-label">إجمالي الحسابات المسجلة</div>
+      </div>
     </div>
   </div>
+
   <div class="col-md-4 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#e8f5e9">
-        <i class="fas fa-check-circle text-success"></i>
+    <div class="kpi-card kpi-green">
+      <i class="fas fa-check-circle kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+        <span class="kpi-badge up">مرحّلة</span>
       </div>
-      <div class="value text-success">{{ posted_entries }}</div>
-      <div class="label">قيود مرحّلة</div>
+      <div class="kpi-body">
+        <div class="kpi-value text-success">{{ posted_entries }}</div>
+        <div class="kpi-label">قيود مرحّلة</div>
+      </div>
     </div>
   </div>
+
   <div class="col-md-4 col-sm-6">
-    <div class="stat-card">
-      <div class="icon-box" style="background:#fff8e1">
-        <i class="fas fa-clock text-warning"></i>
+    <div class="kpi-card kpi-orange">
+      <i class="fas fa-clock kpi-bg-icon"></i>
+      <div class="kpi-header">
+        <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+        <span class="kpi-badge neutral">مسودة</span>
       </div>
-      <div class="value text-warning">{{ draft_entries }}</div>
-      <div class="label">قيود مسودة</div>
+      <div class="kpi-body">
+        <div class="kpi-value text-warning">{{ draft_entries }}</div>
+        <div class="kpi-label">قيود في انتظار الترحيل</div>
+      </div>
     </div>
   </div>
+
 </div>
 
-<!-- ── روابط سريعة للتقارير ── -->
-<div class="row g-3 mb-4">
-  <div class="col-12">
-    <div class="data-card">
-      <div class="card-header">
-        <h6><i class="fas fa-bolt me-2"></i> وصول سريع</h6>
+<!-- ── الوصول السريع ── -->
+<div class="data-card mb-4">
+  <div class="card-header">
+    <h6><i class="fas fa-bolt me-2"></i> وصول سريع</h6>
+  </div>
+  <div class="p-3">
+    <div class="row g-2">
+      <div class="col-6 col-md-3 col-lg">
+        <a href="{% url 'chart_of_accounts' %}" class="quick-link">
+          <i class="fas fa-sitemap" style="color:#3f51b5"></i>
+          دليل الحسابات
+        </a>
       </div>
-      <div class="p-3 d-flex flex-wrap gap-2">
-        <a href="{% url 'chart_of_accounts' %}" class="btn btn-dark-main">
-          <i class="fas fa-sitemap me-1"></i> دليل الحسابات
+      <div class="col-6 col-md-3 col-lg">
+        <a href="{% url 'journal_entry_add' %}" class="quick-link">
+          <i class="fas fa-plus-circle" style="color:#C9A84C"></i>
+          قيد يومي جديد
         </a>
-        <a href="{% url 'journal_entry_add' %}" class="btn btn-gold">
-          <i class="fas fa-plus me-1"></i> قيد يومي جديد
+      </div>
+      <div class="col-6 col-md-3 col-lg">
+        <a href="{% url 'general_ledger' %}" class="quick-link">
+          <i class="fas fa-book" style="color:#00bcd4"></i>
+          حساب الأستاذ
         </a>
-        <a href="{% url 'general_ledger' %}" class="btn btn-outline-secondary">
-          <i class="fas fa-book me-1"></i> حساب الأستاذ
+      </div>
+      <div class="col-6 col-md-3 col-lg">
+        <a href="{% url 'trial_balance' %}" class="quick-link">
+          <i class="fas fa-balance-scale" style="color:#4285f4"></i>
+          ميزان المراجعة
         </a>
-        <a href="{% url 'trial_balance' %}" class="btn btn-outline-secondary">
-          <i class="fas fa-balance-scale me-1"></i> ميزان المراجعة
+      </div>
+      <div class="col-6 col-md-3 col-lg">
+        <a href="{% url 'income_statement' %}" class="quick-link">
+          <i class="fas fa-chart-line" style="color:#34a853"></i>
+          قائمة الدخل
         </a>
-        <a href="{% url 'income_statement' %}" class="btn btn-outline-secondary">
-          <i class="fas fa-chart-line me-1"></i> قائمة الدخل
+      </div>
+      <div class="col-6 col-md-3 col-lg">
+        <a href="{% url 'balance_sheet' %}" class="quick-link">
+          <i class="fas fa-table" style="color:#7c3aed"></i>
+          الميزانية العمومية
         </a>
-        <a href="{% url 'balance_sheet' %}" class="btn btn-outline-secondary">
-          <i class="fas fa-table me-1"></i> الميزانية العمومية
-        </a>
-        <a href="{% url 'journal_export_excel' %}" class="btn btn-outline-success">
-          <i class="fas fa-file-excel me-1"></i> تصدير اليومية
+      </div>
+      <div class="col-6 col-md-3 col-lg">
+        <a href="{% url 'journal_export_excel' %}" class="quick-link">
+          <i class="fas fa-file-excel" style="color:#1b5e20"></i>
+          تصدير اليومية
         </a>
       </div>
     </div>
@@ -163,69 +439,66 @@
 </div>
 
 <!-- ── آخر القيود اليومية ── -->
-<div class="row g-4">
-  <div class="col-12">
-    <div class="data-card">
-      <div class="card-header">
-        <h6><i class="fas fa-book me-2"></i> آخر القيود اليومية</h6>
-        <div class="d-flex gap-2">
-          <a href="{% url 'journal_entry_add' %}" class="btn btn-sm btn-gold">
-            <i class="fas fa-plus me-1"></i> قيد جديد
-          </a>
-          <a href="{% url 'journal_entries_list' %}" class="btn btn-sm btn-outline-light">
-            عرض الكل
-          </a>
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>رقم القيد</th>
-              <th>التاريخ</th>
-              <th>النوع</th>
-              <th>البيان</th>
-              <th>الحالة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for entry in recent_entries %}
-            <tr>
-              <td>
-                <a href="{% url 'journal_entry_detail' entry.pk %}" class="fw-bold text-decoration-none" style="color:var(--accent)">
-                  {{ entry.number }}
-                </a>
-              </td>
-              <td>{{ entry.date }}</td>
-              <td><small class="text-muted">{{ entry.get_entry_type_display }}</small></td>
-              <td class="text-truncate" style="max-width:320px">{{ entry.description }}</td>
-              <td>
-                {% if entry.status == 'posted' %}
-                  <span class="badge bg-success">مرحّل</span>
-                {% elif entry.status == 'draft' %}
-                  <span class="badge bg-warning text-dark">مسودة</span>
-                {% elif entry.status == 'reversed' %}
-                  <span class="badge bg-info">معكوس</span>
-                {% elif entry.status == 'cancelled' %}
-                  <span class="badge bg-secondary">ملغي</span>
-                {% else %}
-                  <span class="badge bg-secondary">{{ entry.get_status_display }}</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5" class="text-center text-muted py-4">
-                <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
-                لا توجد قيود بعد
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+<div class="data-card">
+  <div class="card-header">
+    <h6><i class="fas fa-book me-2"></i> آخر القيود اليومية</h6>
+    <div class="d-flex gap-2">
+      <a href="{% url 'journal_entry_add' %}" class="btn btn-sm btn-gold">
+        <i class="fas fa-plus me-1"></i> قيد جديد
+      </a>
+      <a href="{% url 'journal_entries_list' %}" class="btn btn-sm btn-outline-light">
+        عرض الكل
+      </a>
     </div>
   </div>
+  <div class="table-responsive">
+    <table class="table mb-0 entries-table">
+      <thead>
+        <tr>
+          <th>رقم القيد</th>
+          <th>التاريخ</th>
+          <th>النوع</th>
+          <th>البيان</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in recent_entries %}
+        <tr>
+          <td>
+            <a href="{% url 'journal_entry_detail' entry.pk %}"
+               class="fw-bold text-decoration-none"
+               style="color:var(--accent)">
+              {{ entry.number }}
+            </a>
+          </td>
+          <td>{{ entry.date }}</td>
+          <td><small class="text-muted">{{ entry.get_entry_type_display }}</small></td>
+          <td class="text-truncate" style="max-width:300px">{{ entry.description }}</td>
+          <td>
+            {% if entry.status == 'posted' %}
+              <span class="badge bg-success">مرحّل</span>
+            {% elif entry.status == 'draft' %}
+              <span class="badge bg-warning text-dark">مسودة</span>
+            {% elif entry.status == 'reversed' %}
+              <span class="badge bg-info">معكوس</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ entry.get_status_display }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-5">
+            <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+            لا توجد قيود بعد
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
-
 {% endblock %}
+
+

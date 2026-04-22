@@ -17,19 +17,29 @@
     <a href="{% url 'journal_entries_list' %}" class="btn btn-outline-secondary">
       <i class="fas fa-arrow-right me-1"></i> رجوع
     </a>
-    {% if entry.status == 'posted' %}
-    <a href="{% url 'journal_entry_reverse' entry.pk %}" class="btn btn-outline-warning">
-      <i class="fas fa-undo me-1"></i> عكس القيد
-    </a>
-    {% endif %}
-    {% if entry.status == 'draft' %}
-    <a href="{% url 'journal_entry_post' entry.pk %}" class="btn btn-success">
-      <i class="fas fa-check me-1"></i> ترحيل
-    </a>
-    {% endif %}
-    <button onclick="window.print()" class="btn btn-outline-primary">
-      <i class="fas fa-print me-1"></i> طباعة
-    </button>
+    <!-- في قسم الأزرار العلوية، أضف هذا بعد زر رجوع: -->
+      {% if entry.status == 'draft' %}
+      <a href="{% url 'journal_entry_edit' entry.pk %}" class="btn btn-outline-secondary">
+        <i class="fas fa-edit me-1"></i> تعديل
+      </a>
+      {% endif %}
+
+      {% if entry.status == 'posted' %}
+      <a href="{% url 'journal_entry_reverse' entry.pk %}" class="btn btn-outline-warning">
+        <i class="fas fa-undo me-1"></i> عكس القيد
+      </a>
+      {% endif %}
+
+      {% if entry.status == 'draft' %}
+      <a href="{% url 'journal_entry_post' entry.pk %}" class="btn btn-success"
+        onclick="return confirm('هل أنت متأكد من ترحيل هذا القيد؟')">
+        <i class="fas fa-check me-1"></i> ترحيل
+      </a>
+      {% endif %}
+
+      <button onclick="window.print()" class="btn btn-outline-primary">
+        <i class="fas fa-print me-1"></i> طباعة
+      </button>
   </div>
 </div>
 
@@ -137,7 +147,6 @@
   </div>
 </div>
 
-<!-- التوازن -->
 <!-- التوازن -->
 {% if not is_balanced %}
 <div class="alert alert-danger">

@@ -1,4 +1,3 @@
-<!-- templates/invoices/income_statement.html -->
 {% extends "base.html" %}
 {% load static %}
 
@@ -7,253 +6,481 @@
 
 {% block extra_css %}
 <style>
+.shortcut-btn {
+  font-size: .75rem; padding: 4px 12px;
+  border-radius: 20px; border: 1px solid #dee2e6;
+  background: white; cursor: pointer;
+  transition: all .2s; text-decoration: none; color: #495057;
+  white-space: nowrap;
+}
+.shortcut-btn:hover,
+.shortcut-btn.active {
+  background: var(--accent); border-color: var(--accent);
+  color: white; text-decoration: none;
+}
+
+/* ── بطاقات الملخص — ألوان فاتحة ── */
+.summary-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.summary-strip .s-item {
+  padding: 20px 24px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1.5px solid;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  transition: transform .2s;
+}
+.summary-strip .s-item:hover { transform: translateY(-2px); }
+.summary-strip .s-item.rev {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+.summary-strip .s-item.exp {
+  background: #fff1f2;
+  border-color: #fca5a5;
+}
+.summary-strip .s-item.net-profit {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+.summary-strip .s-item.net-loss {
+  background: #fff1f2;
+  border-color: #fca5a5;
+}
+.summary-strip .s-lbl {
+  font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+  margin-bottom: 6px;
+}
+.summary-strip .s-val {
+  font-size: 1.35rem; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.5px;
+}
+.summary-strip .s-sub {
+  font-size: .7rem; margin-top: 3px;
+}
+
+/* ── رأس القسم — فاتح ── */
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px;
+  font-weight: 700;
+  border-radius: 10px 10px 0 0;
+}
+.section-header.rev-header {
+  background: #f0fdf4;
+  border-bottom: 2px solid #86efac;
+  color: #166534;
+}
+.section-header.exp-header {
+  background: #fff1f2;
+  border-bottom: 2px solid #fca5a5;
+  color: #991b1b;
+}
+.section-header .s-total {
+  font-size: 1rem; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── جداول البنود ── */
+.is-table th {
+  background: #f8f9fa; font-size: .8rem;
+  font-weight: 700; color: #6c757d;
+  padding: 10px 14px; border-bottom: 2px solid #e9ecef;
+}
+.is-table td {
+  padding: 9px 14px; vertical-align: middle;
+  border-bottom: 1px solid #f0f2f5; font-size: .87rem;
+}
+.is-table tbody tr:hover { background: #fafbfc; }
+
+/* ── شريط النسبة ── */
+.pct-bar {
+  height: 3px; border-radius: 2px;
+  margin-top: 4px; transition: width .6s ease;
+  opacity: .5;
+}
+
+/* ── كود الحساب ── */
+.acc-code {
+  font-family: 'Courier New', monospace;
+  font-size: .78rem;
+  background: rgba(0,0,0,.05);
+  padding: 2px 6px; border-radius: 4px;
+  font-weight: 700; color: #666;
+}
+
+.account-link { text-decoration: none; color: inherit; }
+.account-link:hover { color: var(--accent); }
+
+/* ── بطاقة صافي الربح — فاتحة ── */
+.net-card {
+  border-radius: 12px; padding: 28px;
+  text-align: center;
+  border: 1.5px solid;
+  box-shadow: 0 4px 16px rgba(0,0,0,.07);
+}
+.net-card.profit {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-color: #86efac;
+  color: #166534;
+}
+.net-card.loss {
+  background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+.net-card .net-icon { font-size: 2rem; margin-bottom: 8px; opacity: .6; }
+.net-card .net-lbl  { font-size: .9rem; font-weight: 700; opacity: .8; margin-bottom: 6px; }
+.net-card .net-val  {
+  font-size: 2.2rem; font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+.net-card .net-sub  { font-size: .78rem; opacity: .65; margin-top: 8px; }
+
+/* ── بطاقات الملخص السفلية ── */
+.metric-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0,0,0,.05);
+}
+.metric-card .m-lbl { font-size: .72rem; color: #6c757d; font-weight: 600; margin-bottom: 6px; }
+.metric-card .m-val { font-size: 1.2rem; font-weight: 800; color: #1a1a2e; }
+.metric-card .m-hint { font-size: .68rem; color: #adb5bd; margin-top: 3px; }
+
 @media print {
-  #sidebar, .topbar, .filter-section, .no-print { display: none !important; }
-  #main-content { margin: 0 !important; }
-  .card { border: 1px solid #ddd !important; }
+  .no-print { display: none !important; }
 }
-.account-link {
-    text-decoration: none;
-    color: inherit;
-}
-.account-link:hover {
-    color: var(--accent);
-}
-.account-link:hover code {
-    color: var(--accent) !important;
+@media (max-width: 576px) {
+  .summary-strip { grid-template-columns: 1fr; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="data-card">
+
+<!-- ── شريط التحكم ── -->
+<div class="data-card mb-4 no-print">
   <div class="card-header">
-    <h6><i class="fas fa-chart-line me-2"></i> قائمة الدخل (الأرباح والخسائر)</h6>
-    <div class="d-flex gap-2 no-print">
+    <h6><i class="fas fa-chart-line me-2"></i> قائمة الدخل</h6>
+    <div class="d-flex gap-2">
       <a href="?export=excel&date_from={{ from_date }}&date_to={{ to_date }}"
          class="btn btn-sm btn-outline-success">
-        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+        <i class="fas fa-file-excel me-1"></i> Excel
       </a>
-      <button onclick="window.print()" class="btn btn-sm btn-outline-primary">
+      {% comment %} <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
         <i class="fas fa-print me-1"></i> طباعة
-      </button>
+      </button> {% endcomment %}
     </div>
   </div>
 
-  <!-- فلاتر -->
-  <div class="p-3 border-bottom filter-section">
-    <form method="get" class="row g-3 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label small fw-bold">من تاريخ</label>
-        <input type="date" name="date_from" value="{{ from_date }}" class="form-control">
+  <div class="p-3">
+    <form method="get" class="row g-2 align-items-end mb-3">
+      <div class="col-auto">
+        <label class="form-label small fw-bold mb-1">من تاريخ</label>
+        <input type="date" name="date_from" value="{{ from_date }}"
+               class="form-control form-control-sm" style="width:150px">
       </div>
-      <div class="col-md-3">
-        <label class="form-label small fw-bold">إلى تاريخ</label>
-        <input type="date" name="date_to" value="{{ to_date }}" class="form-control">
+      <div class="col-auto">
+        <label class="form-label small fw-bold mb-1">إلى تاريخ</label>
+        <input type="date" name="date_to" value="{{ to_date }}"
+               class="form-control form-control-sm" style="width:150px">
       </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-gold w-100">
+      <div class="col-auto">
+        <button type="submit" class="btn btn-gold btn-sm">
           <i class="fas fa-search me-1"></i> عرض
         </button>
       </div>
-      <div class="col-md-4 text-end">
-        <div class="btn-group no-print">
-          <a href="?date_from={{ from_date }}&date_to={{ to_date }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-sync-alt me-1"></i> تحديث
-          </a>
-        </div>
-      </div>
     </form>
-  </div>
 
-  <div class="p-4">
-    <h4 class="text-center fw-bold mb-2">قائمة الدخل</h4>
-    <p class="text-center text-muted mb-4">
-      <i class="far fa-calendar-alt me-1"></i>
-      من {{ from_date }} إلى {{ to_date }}
-    </p>
-
-    <div class="row">
-      <div class="col-lg-10 mx-auto">
-
-        <!-- الإيرادات -->
-        <div class="card mb-4 border-success">
-          <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-arrow-trend-up me-2"></i> الإيرادات</span>
-            <span class="fs-5">{{ total_revenue|floatformat:2 }} ر.س</span>
-          </div>
-          <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 120px;">كود الحساب</th>
-                  <th>اسم الحساب</th>
-                  <th class="text-end" style="width: 150px;">المبلغ (ر.س)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in rev_rows %}
-                <tr>
-                  <td>
-                    <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
-                       class="account-link no-print">
-                      <code class="text-muted">{{ row.account.code }}</code>
-                    </a>
-                    <code class="text-muted print-only">{{ row.account.code }}</code>
-                  </td>
-                  <td>
-                    <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
-                       class="account-link no-print">
-                      {{ row.account.name_ar }}
-                    </a>
-                    <span class="print-only">{{ row.account.name_ar }}</span>
-                  </td>
-                  <td class="text-end fw-bold text-success">{{ row.amount|floatformat:2 }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="3" class="text-center text-muted py-4">
-                    <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
-                    لا توجد إيرادات في هذه الفترة
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-              <tfoot class="table-success">
-                <tr>
-                  <td colspan="2" class="fw-bold">إجمالي الإيرادات</td>
-                  <td class="text-end fw-bold fs-6">{{ total_revenue|floatformat:2 }}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        <!-- المصروفات -->
-        <div class="card mb-4 border-danger">
-          <div class="card-header bg-danger text-white fw-bold d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-arrow-trend-down me-2"></i> المصروفات</span>
-            <span class="fs-5">{{ total_expenses|floatformat:2 }} ر.س</span>
-          </div>
-          <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 120px;">كود الحساب</th>
-                  <th>اسم الحساب</th>
-                  <th class="text-end" style="width: 150px;">المبلغ (ر.س)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in exp_rows %}
-                <tr>
-                  <td>
-                    <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
-                       class="account-link no-print">
-                      <code class="text-muted">{{ row.account.code }}</code>
-                    </a>
-                    <code class="text-muted print-only">{{ row.account.code }}</code>
-                  </td>
-                  <td>
-                    <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
-                       class="account-link no-print">
-                      {{ row.account.name_ar }}
-                    </a>
-                    <span class="print-only">{{ row.account.name_ar }}</span>
-                  </td>
-                  <td class="text-end fw-bold text-danger">{{ row.amount|floatformat:2 }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="3" class="text-center text-muted py-4">
-                    <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
-                    لا توجد مصروفات في هذه الفترة
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-              <tfoot class="table-danger">
-                <tr>
-                  <td colspan="2" class="fw-bold">إجمالي المصروفات</td>
-                  <td class="text-end fw-bold fs-6">{{ total_expenses|floatformat:2 }}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        <!-- صافي الربح / الخسارة -->
-        <div class="card {% if net_income >= 0 %}border-success{% else %}border-danger{% endif %}">
-          <div class="card-body text-center py-4">
-            <h5 class="fw-bold mb-3">
-              {% if net_income >= 0 %}
-                <i class="fas fa-trophy text-success me-2"></i>
-                <span class="text-success">صافي الربح</span>
-              {% else %}
-                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                <span class="text-danger">صافي الخسارة</span>
-              {% endif %}
-            </h5>
-            <h2 class="fw-bold mb-2 {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">
-              {{ net_income|floatformat:2 }} ر.س
-            </h2>
-            <p class="text-muted small mb-0">
-              <i class="far fa-calendar-alt me-1"></i>
-              للفترة من {{ from_date }} إلى {{ to_date }}
-            </p>
-          </div>
-        </div>
-
-        <!-- ملخص سريع -->
-        <div class="row g-3 mt-4 no-print">
-          <div class="col-md-4">
-            <div class="border rounded p-3 text-center bg-light">
-              <small class="text-muted d-block mb-1">نسبة الربحية</small>
-              <h4 class="mb-0 {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">
-                {% if total_revenue > 0 %}
-                  {% widthratio net_income total_revenue 100 as profit_margin %}
-                  {{ profit_margin }}%
-                {% else %}
-                  —
-                {% endif %}
-              </h4>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="border rounded p-3 text-center bg-light">
-              <small class="text-muted d-block mb-1">إجمالي الإيرادات</small>
-              <h4 class="mb-0 text-success">{{ total_revenue|floatformat:2 }}</h4>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="border rounded p-3 text-center bg-light">
-              <small class="text-muted d-block mb-1">إجمالي المصروفات</small>
-              <h4 class="mb-0 text-danger">{{ total_expenses|floatformat:2 }}</h4>
-            </div>
-          </div>
-        </div>
-
-      </div>
+    <!-- أزرار الاختصار -->
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="text-muted small me-1">اختصارات:</span>
+      {% for sc in shortcuts %}
+      <a href="?date_from={{ sc.from }}&date_to={{ sc.to }}"
+         class="shortcut-btn {% if sc.from == from_date and sc.to == to_date %}active{% endif %}">
+        {{ sc.label }}
+      </a>
+      {% endfor %}
     </div>
   </div>
 </div>
 
-<style>
-.print-only {
-    display: none;
-}
-@media print {
-    .print-only {
-        display: inline;
-    }
-    .no-print {
-        display: none !important;
-    }
-    .account-link {
-        text-decoration: none;
-        color: inherit;
-        pointer-events: none;
-    }
-}
-</style>
+<!-- ── عنوان التقرير ── -->
+<div class="text-center mb-4">
+  <h5 class="fw-bold mb-1">قائمة الدخل</h5>
+  <div class="text-muted small">
+    <i class="far fa-calendar-alt me-1"></i>
+    للفترة من <strong>{{ from_date }}</strong> إلى <strong>{{ to_date }}</strong>
+  </div>
+</div>
+
+<!-- ── بطاقات الملخص ── -->
+<div class="summary-strip">
+
+  <div class="s-item rev">
+    <div class="s-lbl" style="color:#166534">إجمالي الإيرادات</div>
+    <div class="s-val" style="color:#15803d">{{ total_revenue|floatformat:2 }}</div>
+    <div class="s-sub" style="color:#4ade80">ر.س &nbsp;·&nbsp; {{ rev_rows|length }} حساب</div>
+  </div>
+
+  <div class="s-item exp">
+    <div class="s-lbl" style="color:#991b1b">إجمالي المصروفات</div>
+    <div class="s-val" style="color:#dc2626">{{ total_expenses|floatformat:2 }}</div>
+    <div class="s-sub" style="color:#f87171">ر.س &nbsp;·&nbsp; {{ exp_rows|length }} حساب</div>
+  </div>
+
+  <div class="s-item {% if net_income >= 0 %}net-profit{% else %}net-loss{% endif %}">
+    <div class="s-lbl" style="color:{% if net_income >= 0 %}#166534{% else %}#991b1b{% endif %}">
+      صافي {% if net_income >= 0 %}الربح{% else %}الخسارة{% endif %}
+    </div>
+    <div class="s-val" style="color:{% if net_income >= 0 %}#15803d{% else %}#dc2626{% endif %}">
+      {{ net_income|floatformat:2 }}
+    </div>
+    <div class="s-sub" style="color:#9ca3af">
+      {% if total_revenue > 0 %}
+        هامش الربح: {% widthratio net_income total_revenue 100 %}%
+      {% else %}ر.س{% endif %}
+    </div>
+  </div>
+
+</div>
+
+<div class="row">
+<div class="col-lg-10 mx-auto">
+
+  <!-- ══ الإيرادات ══ -->
+  <div class="data-card mb-4">
+    <div class="section-header rev-header">
+      <span>
+        <i class="fas fa-arrow-trend-up me-2" style="color:#16a34a"></i>
+        الإيرادات
+        <span class="badge ms-2"
+              style="background:#dcfce7;color:#166534;font-size:.72rem">
+          {{ rev_rows|length }} حساب
+        </span>
+      </span>
+      <span class="s-total" style="color:#166534">
+        {{ total_revenue|floatformat:2 }} ر.س
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table mb-0 is-table">
+        <thead>
+          <tr>
+            <th style="width:110px">كود الحساب</th>
+            <th>اسم الحساب</th>
+            <th class="text-end" style="width:160px">المبلغ (ر.س)</th>
+            <th class="text-end" style="width:80px">النسبة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rev_rows %}
+          <tr>
+            <td>
+              <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
+                 class="account-link">
+                <span class="acc-code">{{ row.account.code }}</span>
+              </a>
+            </td>
+            <td>
+              <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
+                 class="account-link fw-bold">
+                {{ row.account.name_ar }}
+              </a>
+              <div class="pct-bar" style="background:#16a34a;width:{{ row.pct }}%"></div>
+            </td>
+            <td class="text-end fw-bold" style="color:#15803d">
+              {{ row.amount|floatformat:2 }}
+            </td>
+            <td class="text-end">
+              <span class="badge"
+                    style="background:#dcfce7;color:#166534;font-size:.75rem">
+                {{ row.pct }}%
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center text-muted py-5">
+              <i class="fas fa-inbox fa-2x opacity-25 d-block mb-2"></i>
+              لا توجد إيرادات في هذه الفترة
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if rev_rows %}
+        <tfoot style="background:#f0fdf4">
+          <tr>
+            <td colspan="2" class="fw-bold" style="color:#166534">
+              إجمالي الإيرادات
+            </td>
+            <td class="text-end fw-bold" style="color:#15803d;font-size:1rem">
+              {{ total_revenue|floatformat:2 }} ر.س
+            </td>
+            <td class="text-end">
+              <span class="badge" style="background:#16a34a;color:white">100%</span>
+            </td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ المصروفات ══ -->
+  <div class="data-card mb-4">
+    <div class="section-header exp-header">
+      <span>
+        <i class="fas fa-arrow-trend-down me-2" style="color:#dc2626"></i>
+        المصروفات
+        <span class="badge ms-2"
+              style="background:#ffe4e6;color:#991b1b;font-size:.72rem">
+          {{ exp_rows|length }} حساب
+        </span>
+      </span>
+      <span class="s-total" style="color:#991b1b">
+        {{ total_expenses|floatformat:2 }} ر.س
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table mb-0 is-table">
+        <thead>
+          <tr>
+            <th style="width:110px">كود الحساب</th>
+            <th>اسم الحساب</th>
+            <th class="text-end" style="width:160px">المبلغ (ر.س)</th>
+            <th class="text-end" style="width:80px">النسبة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in exp_rows %}
+          <tr>
+            <td>
+              <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
+                 class="account-link">
+                <span class="acc-code">{{ row.account.code }}</span>
+              </a>
+            </td>
+            <td>
+              <a href="{% url 'account_statement' row.account.pk %}?date_from={{ from_date }}&date_to={{ to_date }}"
+                 class="account-link fw-bold">
+                {{ row.account.name_ar }}
+              </a>
+              <div class="pct-bar" style="background:#dc2626;width:{{ row.pct }}%"></div>
+            </td>
+            <td class="text-end fw-bold" style="color:#dc2626">
+              {{ row.amount|floatformat:2 }}
+            </td>
+            <td class="text-end">
+              <span class="badge"
+                    style="background:#ffe4e6;color:#991b1b;font-size:.75rem">
+                {{ row.pct }}%
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center text-muted py-5">
+              <i class="fas fa-inbox fa-2x opacity-25 d-block mb-2"></i>
+              لا توجد مصروفات في هذه الفترة
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if exp_rows %}
+        <tfoot style="background:#fff1f2">
+          <tr>
+            <td colspan="2" class="fw-bold" style="color:#991b1b">
+              إجمالي المصروفات
+            </td>
+            <td class="text-end fw-bold" style="color:#dc2626;font-size:1rem">
+              {{ total_expenses|floatformat:2 }} ر.س
+            </td>
+            <td class="text-end">
+              <span class="badge" style="background:#dc2626;color:white">100%</span>
+            </td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ صافي الربح / الخسارة ══ -->
+  <div class="net-card mb-4 {% if net_income >= 0 %}profit{% else %}loss{% endif %}">
+    <div class="net-icon">
+      {% if net_income >= 0 %}
+        <i class="fas fa-trophy"></i>
+      {% else %}
+        <i class="fas fa-exclamation-triangle"></i>
+      {% endif %}
+    </div>
+    <div class="net-lbl">
+      صافي {% if net_income >= 0 %}الربح{% else %}الخسارة{% endif %}
+    </div>
+    <div class="net-val">{{ net_income|floatformat:2 }} ر.س</div>
+    <div class="net-sub">
+      للفترة من {{ from_date }} إلى {{ to_date }}
+      {% if total_revenue > 0 %}
+        &nbsp;·&nbsp; هامش الربح:
+        {% widthratio net_income total_revenue 100 %}%
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── مؤشرات سريعة ── -->
+  <div class="row g-3 no-print">
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="m-lbl">نسبة المصروفات للإيرادات</div>
+        <div class="m-val">
+          {% if total_revenue > 0 %}
+            {% widthratio total_expenses total_revenue 100 %}%
+          {% else %}—{% endif %}
+        </div>
+        <div class="m-hint">كلما قلّت كان أفضل</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="m-lbl">هامش صافي الربح</div>
+        <div class="m-val {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">
+          {% if total_revenue > 0 %}
+            {% widthratio net_income total_revenue 100 %}%
+          {% else %}—{% endif %}
+        </div>
+        <div class="m-hint">صافي الربح ÷ الإيرادات</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="m-lbl">حسابات الإيرادات النشطة</div>
+        <div class="m-val" style="color:#15803d">{{ rev_rows|length }}</div>
+        <div class="m-hint">في هذه الفترة</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <div class="m-lbl">حسابات المصروفات النشطة</div>
+        <div class="m-val" style="color:#dc2626">{{ exp_rows|length }}</div>
+        <div class="m-hint">في هذه الفترة</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
 {% endblock %}

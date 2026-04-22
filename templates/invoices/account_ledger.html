@@ -25,25 +25,29 @@
     <h6><i class="fas fa-calendar me-2"></i> الفترة</h6>
   </div>
   <div class="p-3">
-    <form method="get" class="row g-3 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label">من تاريخ</label>
-        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">إلى تاريخ</label>
-        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
-      </div>
-      <div class="col-md-3">
-        <button type="submit" class="btn btn-gold">
-          <i class="fas fa-filter me-1"></i> عرض
-        </button>
-        <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-outline-success">
-          <i class="fas fa-file-excel me-1"></i> تصدير Excel
-        </a>
-        <button onclick="window.print()" class="btn btn-outline-primary">
-          <i class="fas fa-print"></i>
-        </button>
+    <form method="get">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">من تاريخ</label>
+          <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">إلى تاريخ</label>
+          <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex gap-2 justify-content-start">
+            <button type="submit" class="btn btn-gold">
+              <i class="fas fa-filter me-1"></i> عرض
+            </button>
+            <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-outline-success">
+              <i class="fas fa-file-excel me-1"></i> تصدير Excel
+            </a>
+            {% comment %} <button onclick="window.print()" class="btn btn-outline-primary">
+              <i class="fas fa-print"></i>
+            </button> {% endcomment %}
+          </div>
+        </div>
       </div>
     </form>
   </div>

@@ -160,6 +160,9 @@
           <td class="text-center"><strong>{{ inv.total|floatformat:2 }}</strong></td>
           <td class="text-center">
             <div class="d-flex gap-1 justify-content-center">
+              <a href="{% url 'purchases_detail' inv.pk %}"
+                 class="btn btn-sm btn-outline-primary" title="التفاصيل">
+                <i class="fas fa-eye"></i>
               <a href="{% url 'purchases_edit' inv.pk %}"
                  class="btn btn-sm btn-outline-warning" title="تعديل">
                 <i class="fas fa-edit"></i>

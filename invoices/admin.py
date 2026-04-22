@@ -6,40 +6,10 @@ from django.utils import timezone
 from django.urls import reverse
 from django.db.models import Sum
 from decimal import Decimal
-
-from .models import (
-    # Chart of Accounts
-    AccountCategory, AccountGroup, Account,
-    
-    # Journal Entries
-    JournalEntry, JournalEntryLine,
-    
-    # Cost Centers
-    CostCenter,
-    
-    # Company & Parties
-    Company, Client, Supplier,
-    
-    # Invoices
-    SalesInvoice, SalesInvoiceItem,
-    PurchaseInvoice,
-    
-    # ZATCA Integration
-    ZATCADevice, ZATCALog,
-    
-    # Fiscal Year
-    FiscalYear, AccountingPeriod,
-    
-    # Payments
-    Payment, PaymentInvoiceAllocation,
-    
-    # Fixed Assets
-    AssetCategory, FixedAsset,
-    
-    # Users
-    CustomUser,
-)
-
+from .models import (AccountCategory, AccountGroup, Account,JournalEntry, JournalEntryLine,
+                    CostCenter,Company, Client, Supplier,SalesInvoice, SalesInvoiceItem,
+                    PurchaseInvoice,ZATCADevice, ZATCALog,FiscalYear, AccountingPeriod,
+                    Payment, PaymentInvoiceAllocation,CustomUser)
 
 # ============================================================
 # CHART OF ACCOUNTS
@@ -319,6 +289,17 @@ class SalesInvoiceAdmin(admin.ModelAdmin):
         )
     zatca_status_display.short_description = 'حالة زاتكا'
     
+    def balance_due(self, obj):
+        """Display the balance due for the invoice"""
+        balance = obj.total - obj.amount_paid
+        color = 'red' if balance > 0 else 'green'
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{:,.2f}</span>',
+            color, balance
+        )
+    balance_due.short_description = 'المبلغ المتبقي'
+    balance_due.admin_order_field = 'total'  # Allow sorting
+    
     def submit_to_zatca(self, request, queryset):
         from .zatca_service import ZATCAInvoiceService
         submitted = 0
@@ -334,7 +315,6 @@ class SalesInvoiceAdmin(admin.ModelAdmin):
                     pass
         self.message_user(request, f'تم إرسال {submitted} فاتورة إلى زاتكا.')
     submit_to_zatca.short_description = 'إرسال إلى زاتكا'
-
 
 @admin.register(SalesInvoiceItem)
 class SalesInvoiceItemAdmin(admin.ModelAdmin):
@@ -381,7 +361,16 @@ class PurchaseInvoiceAdmin(admin.ModelAdmin):
             'fields': ('created_by', 'created_at')
         }),
     )
-
+    def balance_due(self, obj):
+        """Display the balance due for the invoice"""
+        balance = obj.total - obj.amount_paid
+        color = 'red' if balance > 0 else 'green'
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{:,.2f}</span>',
+            color, balance
+        )
+    balance_due.short_description = 'المبلغ المتبقي'
+    balance_due.admin_order_field = 'total'
 
 # ============================================================
 # ZATCA INTEGRATION

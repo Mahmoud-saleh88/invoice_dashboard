@@ -64,8 +64,6 @@ ZATCA_MAX_RETRIES = 3
 ZATCA_RETRY_DELAY = 5  # seconds
 
 # Logging
-# في ملف settings.py
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

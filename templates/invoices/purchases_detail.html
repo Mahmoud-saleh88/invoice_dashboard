@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}فاتورة مشتريات #{{ inv.invoice_number }}{% endblock %}
+{% block page_title %}فاتورة مشتريات #{{ inv.invoice_number }}{% endblock %}
+
+{% block content %}
+
+<!-- أزرار الإجراءات -->
+<div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+  <a href="{% url 'purchases_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-right me-1"></i>عودة للقائمة
+  </a>
+  <a href="{% url 'purchases_edit' inv.pk %}" class="btn btn-dark-main">
+    <i class="fas fa-edit me-1"></i>تعديل
+  </a>
+  <a href="{% url 'purchases_delete' inv.pk %}"
+     class="btn btn-outline-danger"
+     onclick="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
+    <i class="fas fa-trash me-1"></i>حذف
+  </a>
+</div>
+
+<div class="data-card p-0" style="max-width:900px; margin:auto;">
+
+  <!-- Header -->
+  <div style="padding:16px 20px; display:flex; justify-content:space-between;
+              align-items:center; gap:12px; direction:ltr;">
+    <div style="flex:0 0 auto;">
+      <img src="/static/images/logo.png" alt="logo"
+           style="height:65px; width:auto;"
+           onerror="this.style.display='none'">
+    </div>
+    <div style="text-align:center; flex:1;">
+      <div style="font-size:1.3rem; font-weight:900; color:#111;">فاتورة مشتريات</div>
+      <div style="font-size:1rem; font-weight:700; color:#333; margin-top:2px;">PURCHASE INVOICE</div>
+    </div>
+    <div style="flex:0 0 auto; text-align:center;">
+      <span class="badge {% if inv.amount_paid >= inv.total %}bg-success{% elif inv.amount_paid > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6 px-3 py-2">
+        {% if inv.amount_paid >= inv.total %}
+          مدفوعة بالكامل
+        {% elif inv.amount_paid > 0 %}
+          مدفوعة جزئياً
+        {% else %}
+          غير مدفوعة
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div style="border-top:2.5px solid #1a1a2e; margin:0 16px 10px 16px;"></div>
+
+  <div class="px-3 pb-4">
+
+    <!-- Bill From / Bill To -->
+    <div style="display:flex; gap:8px; margin-bottom:8px; direction:rtl;">
+
+      <!-- المورد -->
+      <div style="flex:1; min-width:0;">
+        <div style="background:#1a1a2e; color:#C9A84C; font-weight:700; font-size:0.85rem;
+                    padding:6px 10px; display:flex; justify-content:space-between;">
+          <span>فاتورة من (المورد)</span>
+          <span style="direction:ltr;">Supplier</span>
+        </div>
+        <div style="background:#f5f5f5; padding:8px 10px;">
+          <div class="bri">
+            <span class="bal">الاسم</span>
+            <span class="bv">{{ inv.supplier.name }}</span>
+            <span class="bel">Name</span>
+          </div>
+          {% if inv.supplier.city %}
+          <div class="bri">
+            <span class="bal">المدينة</span>
+            <span class="bv">{{ inv.supplier.city }}</span>
+            <span class="bel">City</span>
+          </div>
+          {% endif %}
+          <div class="bri">
+            <span class="bal">الرقم الضريبي</span>
+            <span class="bv ltrv">{{ inv.tax_number|default:inv.supplier.vat_number|default:"—" }}</span>
+            <span class="bel">VAT No.</span>
+          </div>
+          {% if inv.supplier.phone %}
+          <div class="bri">
+            <span class="bal">الهاتف</span>
+            <span class="bv ltrv">{{ inv.supplier.phone }}</span>
+            <span class="bel">Phone</span>
+          </div>
+          {% endif %}
+          {% if inv.supplier.cr_number %}
+          <div class="bri">
+            <span class="bal">السجل التجاري</span>
+            <span class="bv ltrv">{{ inv.supplier.cr_number }}</span>
+            <span class="bel">CR No.</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- بيانات الفاتورة -->
+      <div style="flex:1; min-width:0;">
+        <div style="background:#1a1a2e; color:#C9A84C; font-weight:700; font-size:0.85rem;
+                    padding:6px 10px; display:flex; justify-content:space-between;">
+          <span>تفاصيل الفاتورة</span>
+          <span style="direction:ltr;">Invoice Details</span>
+        </div>
+        <div style="background:#f5f5f5; padding:8px 10px;">
+          <div class="bri">
+            <span class="bal">رقم الفاتورة</span>
+            <span class="bv ltrv fw-bold" style="color:var(--accent,#C9A84C);">{{ inv.invoice_number }}</span>
+            <span class="bel">Invoice No.</span>
+          </div>
+          <div class="bri">
+            <span class="bal">تاريخ الفاتورة</span>
+            <span class="bv ltrv">{{ inv.date|date:"Y-m-d" }}</span>
+            <span class="bel">Date</span>
+          </div>
+          <div class="bri">
+            <span class="bal">تاريخ الإدخال</span>
+            <span class="bv ltrv">{{ inv.entry_date|date:"Y-m-d" }}</span>
+            <span class="bel">Entry Date</span>
+          </div>
+          {% if inv.due_date %}
+          <div class="bri">
+            <span class="bal">تاريخ الاستحقاق</span>
+            <span class="bv ltrv">{{ inv.due_date|date:"Y-m-d" }}</span>
+            <span class="bel">Due Date</span>
+          </div>
+          {% endif %}
+          <div class="bri">
+            <span class="bal">نوع المعاملة</span>
+            <span class="bv">{{ inv.get_transaction_type_display }}</span>
+            <span class="bel">Type</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- جدول المبالغ -->
+    <div class="table-responsive mb-3 mt-3">
+      <table class="table table-bordered mb-0" style="direction:rtl; font-size:0.88rem;">
+        <thead style="background:#1a1a2e; color:#C9A84C;">
+          <tr>
+            <th class="text-center" style="width:50%">البيان</th>
+            <th class="text-center">المبلغ (ر.س)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-center">إجمالي بدون ضريبة</td>
+            <td class="text-center fw-bold">{{ inv.subtotal|floatformat:2 }}</td>
+          </tr>
+          {% if inv.discount_amount %}
+          <tr>
+            <td class="text-center text-danger">الخصم</td>
+            <td class="text-center fw-bold text-danger">( {{ inv.discount_amount|floatformat:2 }} )</td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td class="text-center">الضريبة</td>
+            <td class="text-center fw-bold text-danger">{{ inv.tax_amount|floatformat:2 }}</td>
+          </tr>
+          <tr style="background:#1a1a2e; color:white;">
+            <td class="text-center fw-bold">الإجمالي شامل الضريبة (ر.س)</td>
+            <td class="text-center fw-bold fs-6">{{ inv.total|floatformat:2 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- الدفعات -->
+    <div style="display:flex; gap:8px; margin-bottom:12px; direction:rtl;">
+      <div style="flex:1;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; direction:rtl;">
+          <tr style="background:#f5f5f5;">
+            <td class="tar" style="padding:8px 10px; font-weight:600;">المبلغ الإجمالي</td>
+            <td style="padding:8px 10px; font-weight:700; text-align:center;">{{ inv.total|floatformat:2 }} ر.س</td>
+          </tr>
+          <tr>
+            <td class="tar" style="padding:8px 10px; font-weight:600; color:#2e7d32;">المبلغ المدفوع</td>
+            <td style="padding:8px 10px; font-weight:700; text-align:center; color:#2e7d32;">{{ inv.amount_paid|floatformat:2 }} ر.س</td>
+          </tr>
+          <tr style="background:{% if inv.balance_due > 0 %}#fce4ec{% else %}#e8f5e9{% endif %};">
+            <td class="tar" style="padding:8px 10px; font-weight:700;">
+              {% if inv.balance_due > 0 %}المبلغ المتبقي{% else %}تم السداد كاملاً{% endif %}
+            </td>
+            <td style="padding:8px 10px; font-weight:800; text-align:center;
+                       color:{% if inv.balance_due > 0 %}#c62828{% else %}#2e7d32{% endif %};">
+              {{ inv.balance_due|floatformat:2 }} ر.س
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div style="flex:1;"></div>
+    </div>
+
+    <!-- ملاحظات -->
+    {% if inv.notes %}
+    <div style="background:#f9f9f9; border-right:3px solid #C9A84C; padding:10px 14px;
+                margin-top:12px; font-size:0.85rem; direction:rtl;">
+      <strong>ملاحظات:</strong> {{ inv.notes }}
+    </div>
+    {% endif %}
+
+    <!-- مرفقات -->
+    {% if inv.purchaseinvoice_attachments %}
+    <div class="mt-3">
+      <a href="{{ inv.purchaseinvoice_attachments.url }}"
+         target="_blank" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-paperclip me-1"></i>عرض المرفق
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<style>
+.bri  { display:flex; justify-content:space-between; align-items:flex-start; padding:3px 0; gap:4px; direction:rtl; }
+.bal  { font-size:0.82rem; color:#555; white-space:nowrap; min-width:80px; text-align:right; flex-shrink:0; }
+.bv   { font-size:0.82rem; font-weight:600; flex:1; padding:0 6px; text-align:center; word-break:break-word; }
+.bel  { font-size:0.82rem; color:#555; white-space:nowrap; min-width:52px; text-align:left; direction:ltr; flex-shrink:0; }
+.ltrv { direction:ltr; text-align:center; }
+.tar  { text-align:right; }
+</style>
+
+{% endblock %}

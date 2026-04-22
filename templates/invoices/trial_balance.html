@@ -4,139 +4,350 @@
 
 {% block extra_css %}
 <style>
+/* ── اختصارات ── */
+.shortcut-btn {
+  font-size: .75rem; padding: 4px 12px;
+  border-radius: 20px; border: 1px solid #dee2e6;
+  background: white; cursor: pointer;
+  transition: all .2s; text-decoration: none;
+  color: #495057; white-space: nowrap;
+}
+.shortcut-btn:hover,
+.shortcut-btn.active {
+  background: var(--accent); border-color: var(--accent);
+  color: white; text-decoration: none;
+}
+
+/* ── بطاقات الملخص ── */
+.tb-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.tb-summary .ts-item {
+  background: white;
+  border: 1.5px solid #e9ecef;
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0,0,0,.05);
+}
+.tb-summary .ts-lbl {
+  font-size: .7rem; font-weight: 700;
+  color: #6c757d; text-transform: uppercase;
+  letter-spacing: .3px; margin-bottom: 5px;
+}
+.tb-summary .ts-val {
+  font-size: 1.1rem; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.3px;
+}
+
+/* ── الجدول ── */
+.tb-table { font-size: .84rem; }
+.tb-table thead tr:first-child th {
+  background: var(--secondary);
+  color: var(--accent);
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  white-space: nowrap;
+}
+.tb-table thead tr:last-child th {
+  background: #f8f9fa;
+  padding: 8px 12px;
+  font-size: .78rem;
+  font-weight: 700;
+  border-bottom: 2px solid #e9ecef;
+}
+.tb-table tbody td {
+  padding: 8px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f2f5;
+}
+.tb-table tbody tr:hover { background: #fafbfc; }
+.tb-table tfoot td {
+  background: var(--secondary);
+  color: var(--accent);
+  padding: 10px 12px;
+  font-weight: 700;
+  border: none;
+}
+
+/* ── كود الحساب ── */
+.acc-code {
+  font-family: 'Courier New', monospace;
+  font-size: .78rem;
+  background: rgba(0,0,0,.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: #555;
+}
+
+/* ── شارة الفئة ── */
+.cat-badge {
+  font-size: .68rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: #f1f3f5;
+  color: #495057;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .tb-summary { grid-template-columns: 1fr 1fr; }
+}
 @media print {
-  #sidebar, .topbar, .filter-section, .no-print { display:none!important; }
-  #main-content { margin:0!important; }
+  .no-print { display: none !important; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- فلاتر -->
-<div class="data-card mb-4 filter-section">
+
+<!-- ── شريط التحكم ── -->
+<div class="data-card mb-4 no-print">
   <div class="card-header">
-    <h6><i class="fas fa-filter me-2"></i> معايير التقرير</h6>
-    <div class="d-flex gap-2 no-print">
+    <h6><i class="fas fa-balance-scale me-2"></i> ميزان المراجعة</h6>
+    <div class="d-flex gap-2">
       <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}"
          class="btn btn-sm btn-outline-success">
-        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+        <i class="fas fa-file-excel me-1"></i> Excel
       </a>
-      <button onclick="window.print()" class="btn btn-sm btn-outline-light">
-        <i class="fas fa-print"></i>
-      </button>
+      {% comment %} <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-print me-1"></i> طباعة
+      </button> {% endcomment %}
     </div>
   </div>
+
   <div class="p-3">
-    <form method="get" class="row g-3 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label">من تاريخ</label>
-        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+    <!-- فلتر التاريخ -->
+    <form method="get" class="row g-2 align-items-end mb-3">
+      <div class="col-auto">
+        <label class="form-label small fw-bold mb-1">من تاريخ</label>
+        <input type="date" name="date_from" value="{{ date_from }}"
+               class="form-control form-control-sm" style="width:150px">
       </div>
-      <div class="col-md-3">
-        <label class="form-label">إلى تاريخ</label>
-        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      <div class="col-auto">
+        <label class="form-label small fw-bold mb-1">إلى تاريخ</label>
+        <input type="date" name="date_to" value="{{ date_to }}"
+               class="form-control form-control-sm" style="width:150px">
       </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-gold">
+      <div class="col-auto">
+        <button type="submit" class="btn btn-gold btn-sm">
           <i class="fas fa-search me-1"></i> عرض
         </button>
       </div>
     </form>
+
+    <!-- ✅ أزرار الاختصار -->
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="text-muted small me-1">اختصارات:</span>
+      {% for sc in shortcuts %}
+      <a href="?date_from={{ sc.from }}&date_to={{ sc.to }}"
+         class="shortcut-btn {% if sc.from == date_from and sc.to == date_to %}active{% endif %}">
+        {{ sc.label }}
+      </a>
+      {% endfor %}
+    </div>
   </div>
 </div>
 
-<!-- الجدول -->
+<!-- ── عنوان التقرير ── -->
+<div class="text-center mb-4">
+  <h5 class="fw-bold mb-1">ميزان المراجعة</h5>
+  <div class="text-muted small">
+    <i class="far fa-calendar-alt me-1"></i>
+    من <strong>{{ date_from }}</strong> إلى <strong>{{ date_to }}</strong>
+  </div>
+</div>
+
+<!-- ── بطاقات الملخص الأربع ── -->
+<div class="tb-summary no-print">
+  <div class="ts-item">
+    <div class="ts-lbl">حركات مدين</div>
+    <div class="ts-val" style="color:#15803d">
+      {{ total_debit_move|floatformat:2 }}
+    </div>
+    <div style="font-size:.68rem;color:#aaa;margin-top:2px">ر.س</div>
+  </div>
+  <div class="ts-item">
+    <div class="ts-lbl">حركات دائن</div>
+    <div class="ts-val" style="color:#dc2626">
+      {{ total_credit_move|floatformat:2 }}
+    </div>
+    <div style="font-size:.68rem;color:#aaa;margin-top:2px">ر.س</div>
+  </div>
+  <div class="ts-item">
+    <div class="ts-lbl">رصيد مدين</div>
+    <div class="ts-val" style="color:#15803d">
+      {{ total_debit_bal|floatformat:2 }}
+    </div>
+    <div style="font-size:.68rem;color:#aaa;margin-top:2px">ر.س</div>
+  </div>
+  <div class="ts-item">
+    <div class="ts-lbl">رصيد دائن</div>
+    <div class="ts-val" style="color:#dc2626">
+      {{ total_credit_bal|floatformat:2 }}
+    </div>
+    <div style="font-size:.68rem;color:#aaa;margin-top:2px">ر.س</div>
+  </div>
+</div>
+
+<!-- ── الجدول الرئيسي ── -->
 <div class="data-card">
   <div class="card-header">
-    <h6><i class="fas fa-balance-scale me-2"></i> ميزان المراجعة</h6>
-    <div class="d-flex gap-2 align-items-center no-print">
+    <h6>
+      <i class="fas fa-table me-2"></i>
+      تفاصيل الحسابات
+      <span class="badge bg-secondary ms-2" style="font-size:.72rem">
+        {{ rows|length }} حساب
+      </span>
+    </h6>
+    <div class="d-flex align-items-center gap-2">
       {% if is_balanced %}
-      <span class="badge bg-success fs-6">✓ الميزان متوازن</span>
+      <span class="badge px-3 py-2"
+            style="background:#dcfce7;color:#166534;font-size:.78rem">
+        <i class="fas fa-check-circle me-1"></i> الميزان متوازن
+      </span>
       {% else %}
-      <span class="badge bg-danger fs-6">✗ غير متوازن</span>
+      <span class="badge px-3 py-2"
+            style="background:#ffe4e6;color:#991b1b;font-size:.78rem">
+        <i class="fas fa-times-circle me-1"></i> غير متوازن
+      </span>
       {% endif %}
     </div>
   </div>
 
-  <div class="p-2 text-center">
-    <h5 class="fw-bold mb-0">ميزان المراجعة</h5>
-    <small class="text-muted">من {{ date_from }} إلى {{ date_to }}</small>
-  </div>
-
   <div class="table-responsive">
-    <table class="table table-bordered table-hover table-sm mb-0" style="font-size:.84rem">
+    <table class="table table-bordered mb-0 tb-table">
       <thead>
-        <tr class="text-center" style="background:var(--primary)">
-          <th rowspan="2" style="color:var(--accent);vertical-align:middle;width:100px">كود الحساب</th>
-          <th rowspan="2" style="color:var(--accent);vertical-align:middle">اسم الحساب</th>
-          <th rowspan="2" style="color:var(--accent);vertical-align:middle;width:110px">الفئة</th>
-          <th colspan="2" style="color:#4CAF50">حركات الفترة</th>
-          <th colspan="2" style="color:var(--accent)">الأرصدة الختامية</th>
+        <!-- رأس المجموعات -->
+        <tr class="text-center">
+          <th rowspan="2" style="vertical-align:middle;width:100px">كود الحساب</th>
+          <th rowspan="2" style="vertical-align:middle">اسم الحساب</th>
+          <th rowspan="2" style="vertical-align:middle;width:120px">الفئة</th>
+          <th colspan="2"
+              style="background:#f0fdf4;color:#166534;border-bottom:2px solid #86efac">
+            حركات الفترة
+          </th>
+          <th colspan="2"
+              style="background:#eff6ff;color:#1d4ed8;border-bottom:2px solid #93c5fd">
+            الأرصدة الختامية
+          </th>
         </tr>
-        <tr class="text-center" style="background:var(--secondary)">
-          <th style="color:#4CAF50;width:110px">مدين (ر.س)</th>
-          <th style="color:#f44336;width:110px">دائن (ر.س)</th>
-          <th style="color:#4CAF50;width:110px">مدين (ر.س)</th>
-          <th style="color:#f44336;width:110px">دائن (ر.س)</th>
+        <!-- رأس الأعمدة -->
+        <tr class="text-center">
+          <th style="background:#f0fdf4;color:#15803d;width:120px;font-size:.78rem">
+            مدين (ر.س)
+          </th>
+          <th style="background:#fff1f2;color:#dc2626;width:120px;font-size:.78rem">
+            دائن (ر.س)
+          </th>
+          <th style="background:#eff6ff;color:#1d4ed8;width:120px;font-size:.78rem">
+            مدين (ر.س)
+          </th>
+          <th style="background:#faf5ff;color:#7c3aed;width:120px;font-size:.78rem">
+            دائن (ر.س)
+          </th>
         </tr>
       </thead>
+
       <tbody>
         {% for row in rows %}
         <tr>
           <td class="text-center">
-            {% if row.account_pk %}
-              <a href="{% url 'account_statement' row.account_pk %}?date_from={{ date_from }}&date_to={{ date_to }}"
-                 class="text-decoration-none no-print" style="color:var(--accent)" title="كشف الحساب">
-                <code>{{ row.code }}</code>
-              </a>
+            <a href="{% url 'account_statement' row.account_pk %}?date_from={{ date_from }}&date_to={{ date_to }}"
+               class="text-decoration-none no-print" title="كشف الحساب">
+              <span class="acc-code">{{ row.code }}</span>
+            </a>
+          </td>
+          <td class="fw-bold">{{ row.name }}</td>
+          <td class="text-center">
+            <span class="cat-badge">{{ row.category }}</span>
+          </td>
+
+          <!-- حركات مدين -->
+          <td class="text-end fw-bold" style="color:#15803d">
+            {% if row.dr_move %}
+              {{ row.dr_move|floatformat:2 }}
             {% else %}
-              <code>{{ row.code }}</code>
+              <span class="text-muted opacity-25">—</span>
             {% endif %}
           </td>
-          <td>{{ row.name }}</td>
-          <td class="text-center text-muted small">{{ row.category }}</td>
-          <td class="text-end text-success fw-bold">
-            {% if row.dr_move %}{{ row.dr_move|floatformat:2 }}{% else %}—{% endif %}
+
+          <!-- حركات دائن -->
+          <td class="text-end fw-bold" style="color:#dc2626">
+            {% if row.cr_move %}
+              {{ row.cr_move|floatformat:2 }}
+            {% else %}
+              <span class="text-muted opacity-25">—</span>
+            {% endif %}
           </td>
-          <td class="text-end text-danger fw-bold">
-            {% if row.cr_move %}{{ row.cr_move|floatformat:2 }}{% else %}—{% endif %}
+
+          <!-- رصيد مدين -->
+          <td class="text-end fw-bold" style="color:#1d4ed8">
+            {% if row.bal_dr %}
+              {{ row.bal_dr|floatformat:2 }}
+            {% else %}
+              <span class="text-muted opacity-25">—</span>
+            {% endif %}
           </td>
-          <td class="text-end fw-bold" style="color:#1B5E20">
-            {% if row.bal_dr %}{{ row.bal_dr|floatformat:2 }}{% else %}—{% endif %}
-          </td>
-          <td class="text-end fw-bold" style="color:#B71C1C">
-            {% if row.bal_cr %}{{ row.bal_cr|floatformat:2 }}{% else %}—{% endif %}
+
+          <!-- رصيد دائن -->
+          <td class="text-end fw-bold" style="color:#7c3aed">
+            {% if row.bal_cr %}
+              {{ row.bal_cr|floatformat:2 }}
+            {% else %}
+              <span class="text-muted opacity-25">—</span>
+            {% endif %}
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" class="text-center text-muted py-4">
-            <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="fas fa-inbox fa-2x opacity-25 d-block mb-2"></i>
             لا توجد حركات في الفترة المحددة
           </td>
         </tr>
         {% endfor %}
       </tbody>
+
       <tfoot>
-        <tr class="fw-bold" style="background:var(--primary)">
-          <td colspan="3" class="text-center" style="color:var(--accent)">الإجمالي الكلي</td>
-          <td class="text-end" style="color:#4CAF50">{{ total_debit_move|floatformat:2 }}</td>
-          <td class="text-end" style="color:#f44336">{{ total_credit_move|floatformat:2 }}</td>
-          <td class="text-end" style="color:#4CAF50">{{ total_debit_bal|floatformat:2 }}</td>
-          <td class="text-end" style="color:#f44336">{{ total_credit_bal|floatformat:2 }}</td>
+        <tr class="text-center fw-bold">
+          <td colspan="3" style="background:#f8f9fa;color:#1a1a2e">
+            الإجمالي الكلي
+          </td>
+          <td class="text-end" style="background:#f0fdf4;color:#15803d;font-size:.95rem">
+            {{ total_debit_move|floatformat:2 }}
+          </td>
+          <td class="text-end" style="background:#fff1f2;color:#dc2626;font-size:.95rem">
+            {{ total_credit_move|floatformat:2 }}
+          </td>
+          <td class="text-end" style="background:#eff6ff;color:#1d4ed8;font-size:.95rem">
+            {{ total_debit_bal|floatformat:2 }}
+          </td>
+          <td class="text-end" style="background:#faf5ff;color:#7c3aed;font-size:.95rem">
+            {{ total_credit_bal|floatformat:2 }}
+          </td>
         </tr>
       </tfoot>
     </table>
   </div>
 
+  <!-- ── رسالة التوازن ── -->
   <div class="p-3">
     {% if is_balanced %}
-    <div class="alert alert-success mb-0">
+    <div class="alert mb-0 py-2"
+         style="background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:8px">
       <i class="fas fa-check-circle me-2"></i>
-      الميزان متوازن — مجموع المدين = مجموع الدائن = {{ total_debit_bal|floatformat:2 }} ر.س ✓
+      الميزان متوازن — مجموع الأرصدة المدينة = مجموع الأرصدة الدائنة =
+      <strong>{{ total_debit_bal|floatformat:2 }} ر.س</strong> ✓
     </div>
     {% else %}
-    <div class="alert alert-danger mb-0">
+    <div class="alert mb-0 py-2"
+         style="background:#fff1f2;border:1px solid #fca5a5;color:#991b1b;border-radius:8px">
       <i class="fas fa-exclamation-triangle me-2"></i>
       تحذير: الميزان غير متوازن — الفرق:
       <strong>{{ total_debit_bal|floatformat:2 }} - {{ total_credit_bal|floatformat:2 }}</strong> ر.س
@@ -144,4 +355,5 @@
     {% endif %}
   </div>
 </div>
+
 {% endblock %}

@@ -1,8 +1,111 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ title }}{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
 
+{% block extra_css %}
+<style>
+.form-section { margin-bottom: 0; }
+.form-section-title {
+  font-size: .82rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: #6c757d; margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1.5px solid #f0f2f5;
+}
+.form-divider { border: none; border-top: 1px solid #f0f2f5; margin: 20px 0; }
+.form-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding-top: 20px; border-top: 1.5px solid #f0f2f5; margin-top: 4px;
+}
+.field-error { font-size: .78rem; color: #dc3545; margin-top: 4px; }
+
+/* ── شجرة التصنيف المرئية ── */
+.tree-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1.5px solid #e9ecef;
+  overflow: hidden;
+  min-height: 52px;
+}
+.tree-step {
+  flex: 1;
+  padding: 12px 14px;
+  border-left: 1.5px solid #e9ecef;
+  position: relative;
+  transition: background .2s;
+}
+.tree-step:last-child { border-left: none; }
+.tree-step.active { background: #fff8e1; border-left-color: #C9A84C; }
+.tree-step.done   { background: #f0fff4; }
+.tree-step-label {
+  font-size: .68rem; font-weight: 700; color: #aaa;
+  text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px;
+}
+.tree-step.active .tree-step-label { color: #C9A84C; }
+.tree-step.done   .tree-step-label { color: #34a853; }
+.tree-step-value {
+  font-size: .85rem; font-weight: 700; color: #333;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tree-step-code {
+  font-size: .7rem; font-family: 'Courier New', monospace;
+  color: #888; margin-top: 1px;
+}
+.tree-arrow {
+  display: flex; align-items: center;
+  padding: 0 6px; color: #ccc; font-size: .75rem;
+  flex-shrink: 0; align-self: center;
+}
+
+/* كود الحساب التلقائي */
+.auto-code-preview {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: 'Courier New', monospace;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: 8px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .3s ease;
+}
+.auto-code-preview.empty { color: #444; font-size: .85rem; font-family: inherit; font-weight: 400; letter-spacing: 0; }
+
+.step-select {
+  background: white;
+  border: 1.5px solid #dee2e6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: .85rem;
+  width: 100%;
+  transition: border-color .2s;
+}
+.step-select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(201,168,76,.15); }
+.step-select:disabled { background: #f8f9fa; color: #aaa; cursor: not-allowed; }
+
+.badge-normal-balance {
+  font-size: .7rem;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+.badge-debit  { background: #e3f2fd; color: #1565c0; }
+.badge-credit { background: #fce4ec; color: #c62828; }
+</style>
+{% endblock %}
+
 {% block content %}
+{# بيانات الشجرة كـ JSON آمن #}
+<script id="treeData" type="application/json">{{ tree_json|safe }}</script>
+
 <div class="row justify-content-center">
   <div class="col-xl-9 col-lg-11">
 
@@ -28,7 +131,7 @@
       </div>
 
       <div class="p-4">
-        <form method="POST" novalidate>
+        <form method="POST" novalidate id="accountForm">
           {% csrf_token %}
 
           {% if form.non_field_errors %}
@@ -38,30 +141,162 @@
           </div>
           {% endif %}
 
-          <!-- Section: معلومات الحساب الأساسية -->
+          <!-- ══════════════════════════════════════
+               1. التصنيف والهيكل — Cascading
+          ══════════════════════════════════════ -->
+          <div class="form-section mb-4">
+            <div class="form-section-title">
+              <i class="fas fa-sitemap me-2" style="color:var(--accent)"></i>
+              التصنيف والهيكل
+            </div>
+
+            <!-- شريط المسار المرئي -->
+            <div class="tree-flow mb-4">
+              <div class="tree-step" id="step-cat">
+                <div class="tree-step-label">الفئة الرئيسية</div>
+                <div class="tree-step-value" id="step-cat-val">— اختر —</div>
+              </div>
+              <div class="tree-arrow"><i class="fas fa-chevron-left"></i></div>
+              <div class="tree-step" id="step-grp">
+                <div class="tree-step-label">المجموعة</div>
+                <div class="tree-step-value" id="step-grp-val">—</div>
+                <div class="tree-step-code" id="step-grp-code"></div>
+              </div>
+              <div class="tree-arrow"><i class="fas fa-chevron-left"></i></div>
+              <div class="tree-step" id="step-par">
+                <div class="tree-step-label">الحساب الأب</div>
+                <div class="tree-step-value" id="step-par-val">—</div>
+                <div class="tree-step-code" id="step-par-code"></div>
+              </div>
+              <div class="tree-arrow"><i class="fas fa-chevron-left"></i></div>
+              <div class="tree-step active" id="step-new">
+                <div class="tree-step-label">الحساب الجديد</div>
+                <div class="tree-step-value" id="step-new-val">—</div>
+                <div class="tree-step-code" id="step-new-code"></div>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+
+              <!-- الفئة الرئيسية -->
+              <div class="col-md-3">
+                <label class="form-label fw-bold">
+                  الفئة الرئيسية <span class="text-danger">*</span>
+                </label>
+                <select id="sel-category" class="step-select">
+                  <option value="">— اختر الفئة —</option>
+                </select>
+                <div class="mt-1" id="cat-badge-wrap"></div>
+              </div>
+
+              <!-- المجموعة -->
+              <div class="col-md-3">
+                <label class="form-label fw-bold">
+                  المجموعة <span class="text-danger">*</span>
+                </label>
+                {# حقل المجموعة الحقيقي مخفي — نربطه بالـ select المرئي #}
+                <div style="display:none">{{ form.group }}</div>
+                <select id="sel-group" class="step-select" disabled>
+                  <option value="">— اختر أولاً —</option>
+                </select>
+                {% if form.group.errors %}
+                <div class="field-error">{{ form.group.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- الحساب الأب -->
+              <div class="col-md-3">
+                <label class="form-label fw-bold">الحساب الأب</label>
+                <div style="display:none">{{ form.parent }}</div>
+                <select id="sel-parent" class="step-select" disabled>
+                  <option value="">— بلا أب —</option>
+                </select>
+                <div class="form-text">اتركه فارغاً للحساب الرئيسي</div>
+              </div>
+
+              <!-- نوع الحساب -->
+              <div class="col-md-3">
+                <label class="form-label fw-bold">
+                  نوع الحساب <span class="text-danger">*</span>
+                </label>
+                {{ form.account_type }}
+                {% if form.account_type.errors %}
+                <div class="field-error">{{ form.account_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+            </div>
+
+            <div class="row g-3">
+              <!-- الطبيعة -->
+              <div class="col-md-4">
+                <label class="form-label fw-bold">
+                  الطبيعة (Normal Balance) <span class="text-danger">*</span>
+                </label>
+                {{ form.normal_balance }}
+                <div class="form-text">تُحدَّد تلقائياً حسب الفئة</div>
+              </div>
+
+              <!-- حالة النشاط -->
+              <div class="col-md-4 d-flex align-items-end pb-1">
+                <div class="form-check form-switch">
+                  {{ form.is_active }}
+                  <label class="form-check-label fw-bold ms-2" for="{{ form.is_active.id_for_label }}">
+                    الحساب نشط
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- ══════════════════════════════════════
+               2. معلومات الحساب — الكود والاسم
+          ══════════════════════════════════════ -->
           <div class="form-section mb-4">
             <div class="form-section-title">
               <i class="fas fa-info-circle me-2" style="color:var(--accent)"></i>
-              معلومات الحساب الأساسية
+              معلومات الحساب
             </div>
+
+            <!-- معاينة الكود التلقائي -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label fw-bold">كود الحساب المقترح</label>
+                <div class="auto-code-preview empty" id="codePreview">
+                  اختر المجموعة أولاً
+                </div>
+                <div class="form-text text-center">يُحسب تلقائياً — يمكنك تعديله أدناه</div>
+              </div>
+              <div class="col-md-8 d-flex align-items-center">
+                <div class="alert mb-0 py-2 px-3 w-100" style="background:#f0f4ff;border:1px solid #c5d8ff;border-radius:8px;font-size:.82rem;color:#1a3a6b;">
+                  <i class="fas fa-lightbulb me-2" style="color:#C9A84C"></i>
+                  <strong>كيف يعمل الكود:</strong>
+                  الفئة (2) + المجموعة (2) + الأب (2) + التسلسل (2) = 8 أرقام<br>
+                  مثال: <code>01</code> أصول + <code>01</code> متداولة + <code>01</code> صندوق + <code>01</code> = <strong>01010101</strong>
+                </div>
+              </div>
+            </div>
+
             <div class="row g-3">
               <div class="col-md-3">
-                <label class="form-label">كود الحساب <span class="text-danger">*</span></label>
+                <label class="form-label fw-bold">كود الحساب <span class="text-danger">*</span></label>
                 {{ form.code }}
                 {% if form.code.errors %}
-                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.code.errors.0 }}</div>
+                <div class="field-error">{{ form.code.errors.0 }}</div>
                 {% endif %}
-                <div class="form-text">مثال: 01010101</div>
+                <div class="form-text">أرقام فقط — فريد في النظام</div>
               </div>
               <div class="col-md-5">
-                <label class="form-label">اسم الحساب بالعربية <span class="text-danger">*</span></label>
+                <label class="form-label fw-bold">اسم الحساب بالعربية <span class="text-danger">*</span></label>
                 {{ form.name_ar }}
                 {% if form.name_ar.errors %}
-                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.name_ar.errors.0 }}</div>
+                <div class="field-error">{{ form.name_ar.errors.0 }}</div>
                 {% endif %}
               </div>
               <div class="col-md-4">
-                <label class="form-label">Account Name (English)</label>
+                <label class="form-label fw-bold">Account Name (English)</label>
                 {{ form.name_en }}
               </div>
             </div>
@@ -69,52 +304,9 @@
 
           <div class="form-divider"></div>
 
-          <!-- Section: التصنيف والمجموعة -->
-          <div class="form-section mb-4">
-            <div class="form-section-title">
-              <i class="fas fa-sitemap me-2" style="color:var(--accent)"></i>
-              التصنيف والهيكل
-            </div>
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label">المجموعة <span class="text-danger">*</span></label>
-                {{ form.group }}
-                {% if form.group.errors %}
-                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.group.errors.0 }}</div>
-                {% endif %}
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">نوع الحساب <span class="text-danger">*</span></label>
-                {{ form.account_type }}
-                {% if form.account_type.errors %}
-                <div class="field-error"><i class="fas fa-circle-exclamation me-1"></i>{{ form.account_type.errors.0 }}</div>
-                {% endif %}
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">الطبيعة (Normal Balance) <span class="text-danger">*</span></label>
-                {{ form.normal_balance }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">الحساب الأب</label>
-                {{ form.parent }}
-                <div class="form-text">اتركه فارغاً إذا كان حساباً رئيسياً</div>
-              </div>
-              <div class="col-md-6 d-flex align-items-center">
-                <div class="toggle-wrapper mt-3">
-                  <div class="form-check form-switch form-check-lg">
-                    {{ form.is_active }}
-                    <label class="form-check-label fw-600" for="{{ form.is_active.id_for_label }}">
-                      الحساب نشط
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-divider"></div>
-
-          <!-- Section: الرصيد الافتتاحي -->
+          <!-- ══════════════════════════════════════
+               3. الرصيد الافتتاحي
+          ══════════════════════════════════════ -->
           <div class="form-section mb-4">
             <div class="form-section-title">
               <i class="fas fa-coins me-2" style="color:var(--accent)"></i>
@@ -122,14 +314,14 @@
             </div>
             <div class="row g-3">
               <div class="col-md-4">
-                <label class="form-label">قيمة الرصيد الافتتاحي</label>
+                <label class="form-label fw-bold">قيمة الرصيد الافتتاحي</label>
                 <div class="input-group">
                   {{ form.opening_balance }}
-                  <span class="input-group-text" style="background:var(--secondary);color:rgba(255,255,255,.6);border:1.5px solid #dee2e6;border-right:none;font-size:.82rem">ر.س</span>
+                  <span class="input-group-text" style="background:var(--secondary);color:rgba(255,255,255,.6);font-size:.82rem">ر.س</span>
                 </div>
               </div>
               <div class="col-md-4">
-                <label class="form-label">تاريخ الرصيد الافتتاحي</label>
+                <label class="form-label fw-bold">تاريخ الرصيد الافتتاحي</label>
                 {{ form.opening_balance_date }}
               </div>
             </div>
@@ -137,7 +329,9 @@
 
           <div class="form-divider"></div>
 
-          <!-- Section: ملاحظات -->
+          <!-- ══════════════════════════════════════
+               4. ملاحظات
+          ══════════════════════════════════════ -->
           <div class="form-section mb-4">
             <div class="form-section-title">
               <i class="fas fa-sticky-note me-2" style="color:var(--accent)"></i>
@@ -146,7 +340,7 @@
             {{ form.notes }}
           </div>
 
-          <!-- Actions -->
+          <!-- أزرار الحفظ -->
           <div class="form-actions">
             <a href="{% url 'chart_of_accounts' %}" class="btn btn-outline-secondary">
               <i class="fas fa-times me-1"></i> إلغاء
@@ -162,4 +356,294 @@
 
   </div>
 </div>
+
+<script>
+(function () {
+'use strict';
+
+/* ── 1. بيانات الشجرة ── */
+var TREE = {};
+try {
+  TREE = JSON.parse(document.getElementById('treeData').textContent);
+} catch(e) { console.error('treeData parse error', e); }
+
+/* ── 2. مراجع DOM ── */
+var selCat    = document.getElementById('sel-category');
+var selGrp    = document.getElementById('sel-group');
+var selPar    = document.getElementById('sel-parent');
+var realGrp   = document.getElementById('{{ form.group.id_for_label }}');
+var realPar   = document.getElementById('{{ form.parent.id_for_label }}');
+var realNB    = document.getElementById('{{ form.normal_balance.id_for_label }}');
+var realCode  = document.getElementById('{{ form.code.id_for_label }}');
+var codePreview = document.getElementById('codePreview');
+
+/* مسار شجرة */
+var stepCat   = document.getElementById('step-cat');
+var stepGrp   = document.getElementById('step-grp');
+var stepPar   = document.getElementById('step-par');
+var stepNew   = document.getElementById('step-new');
+var stepCatV  = document.getElementById('step-cat-val');
+var stepGrpV  = document.getElementById('step-grp-val');
+var stepGrpC  = document.getElementById('step-grp-code');
+var stepParV  = document.getElementById('step-par-val');
+var stepParC  = document.getElementById('step-par-code');
+var stepNewV  = document.getElementById('step-new-val');
+var stepNewC  = document.getElementById('step-new-code');
+var catBadge  = document.getElementById('cat-badge-wrap');
+
+/* ── 3. تعبئة فئات ── */
+Object.keys(TREE).sort().forEach(function(catCode) {
+  var cat = TREE[catCode];
+  var opt = document.createElement('option');
+  opt.value = catCode;
+  opt.textContent = catCode + ' — ' + cat.name;
+  selCat.appendChild(opt);
+});
+
+/* ── 4. تحديث شارة الطبيعة ── */
+function updateNBBadge(nb) {
+  if (!catBadge) return;
+  catBadge.innerHTML = nb
+    ? '<span class="badge-normal-balance badge-' + nb + '">' +
+        (nb === 'debit' ? 'طبيعة مدينة' : 'طبيعة دائنة') +
+      '</span>'
+    : '';
+}
+
+/* ── 5. حساب الكود التلقائي ── */
+function suggestCode(grpCode, parCode) {
+  if (!grpCode) return '';
+
+  // أقصر كود موجود تحت هذا الأب أو المجموعة
+  var catCode = selCat.value;
+  if (!catCode || !TREE[catCode]) return '';
+  var grpData = TREE[catCode].groups[grpCode];
+  if (!grpData) return '';
+
+  var prefix;
+  if (parCode) {
+    // الكود = كود الأب + 2 رقم تسلسلي
+    var siblings = grpData.accounts.filter(function(a) {
+      return a.code.startsWith(parCode) && a.code.length === parCode.length + 2;
+    });
+    var maxSeq = 0;
+    siblings.forEach(function(s) {
+      var seq = parseInt(s.code.slice(-2)) || 0;
+      if (seq > maxSeq) maxSeq = seq;
+    });
+    prefix = parCode + String(maxSeq + 1).padStart(2, '0');
+  } else {
+    // الكود = كود المجموعة + 2 رقم تسلسلي
+    var top = grpData.accounts.filter(function(a) {
+      return a.code.startsWith(grpCode) && a.code.length === grpCode.length + 2;
+    });
+    var maxSeq2 = 0;
+    top.forEach(function(s) {
+      var seq = parseInt(s.code.slice(-2)) || 0;
+      if (seq > maxSeq2) maxSeq2 = seq;
+    });
+    prefix = grpCode + String(maxSeq2 + 1).padStart(2, '0');
+  }
+  return prefix;
+}
+
+/* ── 6. تحديث معاينة الكود ── */
+function refreshCodePreview() {
+  var grpCode = selGrp.value;
+  var parCode = selPar.value;
+  var suggested = suggestCode(grpCode, parCode);
+
+  if (suggested) {
+    codePreview.textContent = suggested;
+    codePreview.classList.remove('empty');
+    // ✅ ضع الكود في حقل الكود تلقائياً إذا كان فارغاً أو تلقائياً
+    if (!realCode.dataset.userEdited) {
+      realCode.value = suggested;
+    }
+    stepNewC.textContent = suggested;
+  } else {
+    codePreview.textContent = 'اختر المجموعة أولاً';
+    codePreview.classList.add('empty');
+    stepNewC.textContent = '';
+  }
+}
+
+/* ── 7. تغيير الفئة ── */
+selCat.addEventListener('change', function() {
+  var catCode = this.value;
+
+  // إعادة تعيين
+  selGrp.innerHTML = '<option value="">— اختر المجموعة —</option>';
+  selPar.innerHTML  = '<option value="">— بلا أب —</option>';
+  selGrp.disabled   = true;
+  selPar.disabled   = true;
+  if (realGrp) realGrp.value = '';
+  if (realPar) realPar.value = '';
+
+  // تحديث شريط المسار
+  if (catCode && TREE[catCode]) {
+    var cat = TREE[catCode];
+    stepCatV.textContent = cat.name;
+    stepCat.classList.add('done');
+
+    // الطبيعة التلقائية
+    if (realNB) {
+      realNB.value = cat.normal_balance;
+      updateNBBadge(cat.normal_balance);
+    }
+
+    // تعبئة المجموعات
+    Object.keys(cat.groups).sort().forEach(function(grpCode) {
+      var grp = cat.groups[grpCode];
+      var opt = document.createElement('option');
+      opt.value = grpCode;
+      opt.textContent = grpCode + ' — ' + grp.name;
+      selGrp.appendChild(opt);
+    });
+    selGrp.disabled = false;
+  } else {
+    stepCatV.textContent = '— اختر —';
+    stepCat.classList.remove('done');
+    updateNBBadge('');
+  }
+
+  stepGrpV.textContent = '—'; stepGrpC.textContent = '';
+  stepParV.textContent = '—'; stepParC.textContent = '';
+  stepGrp.classList.remove('done');
+  stepPar.classList.remove('done');
+  refreshCodePreview();
+});
+
+/* ── 8. تغيير المجموعة ── */
+selGrp.addEventListener('change', function() {
+  var catCode = selCat.value;
+  var grpCode = this.value;
+
+  selPar.innerHTML = '<option value="">— بلا أب —</option>';
+  selPar.disabled  = true;
+  if (realPar) realPar.value = '';
+
+  if (grpCode && TREE[catCode] && TREE[catCode].groups[grpCode]) {
+    var grpData = TREE[catCode].groups[grpCode];
+
+    // ربط بالحقل الحقيقي
+    if (realGrp) realGrp.value = grpData.id;
+
+    // تحديث شريط المسار
+    stepGrpV.textContent = grpData.name;
+    stepGrpC.textContent = grpCode;
+    stepGrp.classList.add('done');
+
+    // تعبئة الحسابات الأب
+    grpData.accounts.forEach(function(acc) {
+      var opt = document.createElement('option');
+      opt.value = acc.code;
+      opt.dataset.id = acc.id;
+      opt.textContent = acc.code + ' — ' + acc.name +
+        (acc.type === 'header' ? ' (رأسي)' : '');
+      selPar.appendChild(opt);
+    });
+    selPar.disabled = (grpData.accounts.length === 0);
+  } else {
+    if (realGrp) realGrp.value = '';
+    stepGrpV.textContent = '—'; stepGrpC.textContent = '';
+    stepGrp.classList.remove('done');
+  }
+
+  stepParV.textContent = '—'; stepParC.textContent = '';
+  stepPar.classList.remove('done');
+  refreshCodePreview();
+});
+
+/* ── 9. تغيير الحساب الأب ── */
+selPar.addEventListener('change', function() {
+  var parCode = this.value;
+  var selOpt  = this.options[this.selectedIndex];
+
+  if (parCode && selOpt) {
+    // ربط بالحقل الحقيقي
+    if (realPar) realPar.value = selOpt.dataset.id || '';
+
+    stepParV.textContent = selOpt.textContent;
+    stepParC.textContent = parCode;
+    stepPar.classList.add('done');
+  } else {
+    if (realPar) realPar.value = '';
+    stepParV.textContent = '—'; stepParC.textContent = '';
+    stepPar.classList.remove('done');
+  }
+  refreshCodePreview();
+});
+
+/* ── 10. منع تعديل الكود يدوياً يُوقف التلقائي ── */
+if (realCode) {
+  realCode.addEventListener('input', function() {
+    this.dataset.userEdited = '1';
+    stepNewV.textContent = this.value || '—';
+    stepNewC.textContent = '';
+    codePreview.textContent = this.value || 'أدخل الكود';
+    codePreview.classList.toggle('empty', !this.value);
+  });
+}
+
+/* ── 11. تهيئة عند التعديل (قيم موجودة) ── */
+{% if account %}
+(function initEdit() {
+  var currentGrpId   = '{{ account.group_id }}';
+  var currentParId   = '{{ account.parent_id|default:"" }}';
+  var currentCode    = '{{ account.code }}';
+
+  // ابحث عن الفئة التي تحتوي هذه المجموعة
+  Object.keys(TREE).forEach(function(catCode) {
+    Object.keys(TREE[catCode].groups).forEach(function(grpCode) {
+      if (String(TREE[catCode].groups[grpCode].id) === String(currentGrpId)) {
+        // اختر الفئة
+        selCat.value = catCode;
+        selCat.dispatchEvent(new Event('change'));
+
+        // اختر المجموعة
+        setTimeout(function() {
+          selGrp.value = grpCode;
+          selGrp.dispatchEvent(new Event('change'));
+
+          // اختر الأب
+          setTimeout(function() {
+            if (currentParId) {
+              var opts = selPar.options;
+              for (var i = 0; i < opts.length; i++) {
+                if (opts[i].dataset.id === String(currentParId)) {
+                  selPar.value = opts[i].value;
+                  selPar.dispatchEvent(new Event('change'));
+                  break;
+                }
+              }
+            }
+            // أعد الكود الأصلي
+            if (realCode) {
+              realCode.value = currentCode;
+              realCode.dataset.userEdited = '1';
+              codePreview.textContent = currentCode;
+              codePreview.classList.remove('empty');
+            }
+          }, 50);
+        }, 50);
+      }
+    });
+  });
+})();
+{% endif %}
+
+/* ── 12. تحديث step الحساب الجديد عند تغيير الاسم ── */
+var nameAr = document.getElementById('{{ form.name_ar.id_for_label }}');
+if (nameAr) {
+  nameAr.addEventListener('input', function() {
+    stepNewV.textContent = this.value || '—';
+  });
+  {% if account %}
+  stepNewV.textContent = '{{ account.name_ar|escapejs }}';
+  {% endif %}
+}
+
+})();
+</script>
 {% endblock %}

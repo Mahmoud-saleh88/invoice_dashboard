@@ -1,4 +1,3 @@
-<!-- templates/invoices/chart_of_accounts.html -->
 {% extends "base.html" %}
 {% load static %}
 
@@ -7,227 +6,255 @@
 
 {% block extra_css %}
 <style>
-/* الفئات الرئيسية - ألوان مختلفة للتمييز */
-.category-01 .category-header { background: #1a237e !important; }  /* الأصول - أزرق غامق */
-.category-02 .category-header { background: #b71c1c !important; }  /* الالتزامات - أحمر */
-.category-03 .category-header { background: #1b5e20 !important; }  /* حقوق الملكية - أخضر */
-.category-04 .category-header { background: #e65100 !important; }  /* الإيرادات - برتقالي */
-.category-05 .category-header { background: #4a148c !important; }  /* المصروفات - بنفسجي */
 
-.category-header {
-    padding: 15px 20px;
-    border-radius: 8px 8px 0 0;
-    color: white !important;
+/* ════════════════════════════════════════════
+   بطاقات الملخص المالي — تصميم حديث
+════════════════════════════════════════════ */
+
+.summary-card {
+  position: relative;
+  border-radius: 16px;
+  padding: 20px 18px 16px;
+  overflow: hidden;
+  cursor: default;
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1),
+              box-shadow 0.3s ease;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.category-header h5 {
-    margin: 0;
-    font-weight: bold;
+.summary-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
 }
 
-.category-header small {
-    color: rgba(255,255,255,0.8) !important;
+/* ── ألوان الفئات — فاتحة وحديثة ── */
+.summary-card.cat-01 {
+  background: linear-gradient(135deg, #e8f0fe 0%, #c5d8ff 100%);
+  border: 1px solid #a8c4ff;
+  box-shadow: 0 4px 20px rgba(66,133,244,0.15);
+  color: #1a3a6b;
+}
+.summary-card.cat-02 {
+  background: linear-gradient(135deg, #fce8e8 0%, #ffc5c5 100%);
+  border: 1px solid #ffaaaa;
+  box-shadow: 0 4px 20px rgba(234,67,53,0.15);
+  color: #6b1a1a;
+}
+.summary-card.cat-03 {
+  background: linear-gradient(135deg, #e6f4ea 0%, #b8e6c2 100%);
+  border: 1px solid #96d4a4;
+  box-shadow: 0 4px 20px rgba(52,168,83,0.15);
+  color: #1a4d27;
+}
+.summary-card.cat-04 {
+  background: linear-gradient(135deg, #fef3e2 0%, #ffd9a0 100%);
+  border: 1px solid #ffca78;
+  box-shadow: 0 4px 20px rgba(251,188,5,0.2);
+  color: #5c3d00;
+}
+.summary-card.cat-05 {
+  background: linear-gradient(135deg, #f0e8fe 0%, #d8b8ff 100%);
+  border: 1px solid #c49eff;
+  box-shadow: 0 4px 20px rgba(103,58,183,0.15);
+  color: #2d1a5c;
 }
 
-/* المجموعات - لون موحد (رمادي فاتح) */
+/* ── Glow Effect ── */
+.card-glow {
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  opacity: 0.25;
+  transition: opacity 0.3s;
+}
+.cat-01 .card-glow { background: radial-gradient(circle, #4285f4, transparent); }
+.cat-02 .card-glow { background: radial-gradient(circle, #ea4335, transparent); }
+.cat-03 .card-glow { background: radial-gradient(circle, #34a853, transparent); }
+.cat-04 .card-glow { background: radial-gradient(circle, #fbbc05, transparent); }
+.cat-05 .card-glow { background: radial-gradient(circle, #673ab7, transparent); }
+.summary-card:hover .card-glow { opacity: 0.45; }
+
+/* ── أيقونة الفئة ── */
+.card-icon {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+  opacity: 0.75;
+  transition: transform 0.3s, opacity 0.3s;
+}
+.summary-card:hover .card-icon {
+  transform: scale(1.15) rotate(-5deg);
+  opacity: 1;
+}
+.cat-01 .card-icon { color: #4285f4; }
+.cat-02 .card-icon { color: #ea4335; }
+.cat-03 .card-icon { color: #34a853; }
+.cat-04 .card-icon { color: #f9a825; }
+.cat-05 .card-icon { color: #7c3aed; }
+
+/* ── اسم الفئة ── */
+.cat-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+/* ── الرصيد ── */
+.cat-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.balance-number {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  direction: ltr;
+  display: inline-block;
+  transition: color 0.3s;
+}
+.currency {
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+/* ── شارة الطبيعة ── */
+.cat-meta { margin-bottom: 8px; }
+.normal-bal-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.08);
+  backdrop-filter: blur(4px);
+}
+
+/* ── شريط Sparkline ── */
+.card-sparkline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+}
+.sparkline-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 0 0 16px 16px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cat-01 .sparkline-bar { background: linear-gradient(90deg, #4285f4, #0d47a1); }
+.cat-02 .sparkline-bar { background: linear-gradient(90deg, #ea4335, #b71c1c); }
+.cat-03 .sparkline-bar { background: linear-gradient(90deg, #34a853, #1b5e20); }
+.cat-04 .sparkline-bar { background: linear-gradient(90deg, #fbbc05, #e65100); }
+.cat-05 .sparkline-bar { background: linear-gradient(90deg, #7c3aed, #4a148c); }
+
+/* ── Ripple على الكليك ── */
+.summary-card::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  background: rgba(255,255,255,0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease, opacity 0.4s;
+  opacity: 0;
+  pointer-events: none;
+}
+.summary-card:active::after {
+  width: 200px; height: 200px; opacity: 0;
+}
+
+/* ── Loading skeleton ── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.balance-loading {
+  background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.06) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+  width: 80px;
+  height: 22px;
+  display: inline-block;
+}
+
+/* ── Counter animation ── */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.balance-number.animated {
+  animation: countUp 0.5s ease forwards;
+}
+
+/* ── Pulse on load ── */
+@keyframes cardEntrance {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.summary-card {
+  animation: cardEntrance 0.5s ease forwards;
+  opacity: 0;
+}
+.summary-card:nth-child(1) { animation-delay: 0.05s; }
+.summary-card:nth-child(2) { animation-delay: 0.10s; }
+.summary-card:nth-child(3) { animation-delay: 0.15s; }
+.summary-card:nth-child(4) { animation-delay: 0.20s; }
+.summary-card:nth-child(5) { animation-delay: 0.25s; }
+
+/* ══ باقي الأنماط الموجودة ══ */
+.category-01 .category-header { background: #1a237e !important; }
+.category-02 .category-header { background: #b71c1c !important; }
+.category-03 .category-header { background: #1b5e20 !important; }
+.category-04 .category-header { background: #e65100 !important; }
+.category-05 .category-header { background: #4a148c !important; }
+.category-header { padding: 15px 20px; border-radius: 8px 8px 0 0; color: white !important; }
+.category-header h5 { margin: 0; font-weight: bold; }
+.category-header small { color: rgba(255,255,255,0.8) !important; }
 .group-header {
-    padding: 12px 20px;
-    background: #f1f3f5;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #dee2e6;
-    transition: background 0.2s;
+  padding: 12px 20px; background: #f1f3f5; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #dee2e6; transition: background 0.2s;
 }
-
-.group-header:hover {
-    background: #e9ecef;
-}
-
-.group-header .group-code {
-    font-weight: bold;
-    color: var(--accent);
-    margin-left: 15px;
-}
-
-.group-header .group-name {
-    font-weight: 600;
-    color: #333;
-}
-
-.group-header .badge {
-    background: #6c757d;
-    color: white;
-    font-size: 0.75rem;
-}
-
-.group-content {
-    background: white;
-}
-
-.toggle-icon {
-    transition: transform 0.2s;
-    font-size: 14px;
-    color: #6c757d;
-    margin-left: 10px;
-}
-
-.group-header.collapsed .toggle-icon {
-    transform: rotate(-90deg);
-}
-
-/* جدول الحسابات */
-.accounts-table {
-    width: 100%;
-    margin: 0;
-}
-
+.group-header:hover { background: #e9ecef; }
+.group-header .group-code { font-weight: bold; color: var(--accent); margin-left: 15px; }
+.group-header .group-name { font-weight: 600; color: #333; }
+.group-content { background: white; }
+.toggle-icon { transition: transform 0.2s; font-size: 14px; color: #6c757d; margin-left: 10px; }
+.group-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+.accounts-table { width: 100%; margin: 0; }
 .accounts-table th {
-    background: #f8f9fa;
-    color: #495057;
-    font-weight: 600;
-    font-size: 0.85rem;
-    padding: 10px 15px;
-    border-bottom: 2px solid #dee2e6;
+  background: #f8f9fa; color: #495057; font-weight: 600;
+  font-size: 0.85rem; padding: 10px 15px; border-bottom: 2px solid #dee2e6;
 }
-
-.accounts-table td {
-    padding: 8px 15px;
-    border-bottom: 1px solid #f1f3f5;
-    vertical-align: middle;
-}
-
-.account-row {
-    transition: background 0.15s;
-}
-
-.account-row:hover {
-    background: #f8f9fa;
-}
-
-.account-code {
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    color: var(--accent);
-    font-size: 0.9rem;
-}
-
-.account-name {
-    font-weight: 500;
-}
-
-.account-name .fa-folder {
-    color: #f0ad4e;
-    margin-left: 8px;
-}
-
-.account-name .fa-file {
-    color: #6c757d;
-    margin-left: 8px;
-}
-
-/* مسافة بادئة للحسابات الفرعية */
+.accounts-table td { padding: 8px 15px; border-bottom: 1px solid #f1f3f5; vertical-align: middle; }
+.account-row { transition: background 0.15s; }
+.account-row:hover { background: #f8f9fa; }
+.account-code { font-family: 'Courier New', monospace; font-weight: 600; color: var(--accent); font-size: 0.9rem; }
 .account-row.level-1 td:first-child { padding-right: 35px !important; }
 .account-row.level-2 td:first-child { padding-right: 55px !important; }
 .account-row.level-3 td:first-child { padding-right: 75px !important; }
-.account-row.level-4 td:first-child { padding-right: 95px !important; }
-
-/* شارات النوع */
-.badge-header {
-    background: #fff3cd;
-    color: #856404;
-    font-size: 0.7rem;
-}
-
-.badge-detail {
-    background: #d1ecf1;
-    color: #0c5460;
-    font-size: 0.7rem;
-}
-
-/* أزرار الإجراءات */
-.account-actions {
-    opacity: 0.5;
-    transition: opacity 0.2s;
-}
-
-.account-row:hover .account-actions {
-    opacity: 1;
-}
-
-/* بطاقات الفئات */
-.category-card {
-    margin-bottom: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    overflow: hidden;
-}
-
-.category-content {
-    background: white;
-}
-
-/* أزرار التحكم */
-.control-bar {
-    background: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-/* أزرار الإجراءات - تحديث */
-.account-actions {
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
-
-.account-row:hover .account-actions {
-    opacity: 1;
-}
-
-.account-actions .btn-group {
-    gap: 3px;
-}
-
-.account-actions .btn {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    border-radius: 4px;
-    line-height: 1;
-}
-
-.account-actions .btn-outline-info:hover {
-    background-color: #0dcaf0;
-    color: white;
-}
-
-.account-actions .btn-outline-warning:hover {
-    background-color: #ffc107;
-    color: #000;
-}
-
-.account-actions .btn-outline-success:hover {
-    background-color: #198754;
-    color: white;
-}
-
-/* Tooltip styling */
-.account-actions .btn {
-    position: relative;
-}
-
-/* عرض الأزرار بشكل أفضل على الشاشات الصغيرة */
-@media (max-width: 768px) {
-    .account-actions .btn-group {
-        display: flex;
-        flex-direction: row;
-    }
-    
-    .account-actions .btn {
-        padding: 3px 6px;
-    }
-}
+.account-actions { opacity: 0.5; transition: opacity 0.2s; }
+.account-row:hover .account-actions { opacity: 1; }
+.account-actions .btn { padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; line-height: 1; }
+.category-card { margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+.control-bar { background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 </style>
 {% endblock %}
 
@@ -235,143 +262,211 @@
 
 <!-- شريط التحكم -->
 <div class="control-bar d-flex justify-content-between align-items-center">
-    <div>
-        <a href="{% url 'account_add' %}" class="btn btn-gold">
-            <i class="fas fa-plus me-1"></i>
-            إضافة حساب جديد
-        </a>
-        <a href="{% url 'accounting_dashboard' %}" class="btn btn-outline-secondary ms-2">
-            <i class="fas fa-chart-pie me-1"></i>
-            لوحة المحاسبة
-        </a>
+  <div>
+    <a href="{% url 'account_add' %}" class="btn btn-gold">
+      <i class="fas fa-plus me-1"></i> إضافة حساب جديد
+    </a>
+    <a href="{% url 'accounting_dashboard' %}" class="btn btn-outline-secondary ms-2">
+      <i class="fas fa-chart-pie me-1"></i> لوحة المحاسبة
+    </a>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-primary btn-sm" onclick="expandAll()">
+      <i class="fas fa-expand me-1"></i> توسيع الكل
+    </button>
+    <button class="btn btn-outline-secondary btn-sm" onclick="collapseAll()">
+      <i class="fas fa-compress me-1"></i> طي الكل
+    </button>
+  </div>
+</div>
+
+<!-- ✅ بطاقات الملخص المالي -->
+<!-- ✅ بطاقات الملخص المالي — تصميم حديث -->
+<div class="row g-3 mb-4">
+  {% for category in categories %}
+  <div class="col">
+    <div class="summary-card cat-{{ category.code }}">
+      <div class="card-glow"></div>
+      <div class="card-icon">
+        <i class="fas fa-{% if category.code == '01' %}landmark
+                          {% elif category.code == '02' %}hand-holding-usd
+                          {% elif category.code == '03' %}coins
+                          {% elif category.code == '04' %}arrow-trend-up
+                          {% else %}arrow-trend-down{% endif %}"></i>
+      </div>
+      <div class="cat-name">{{ category.name_ar }}</div>
+      <div class="cat-balance">
+        <span class="balance-number" data-value="{{ category.total_balance }}">0.00</span>
+        <small class="currency">ر.س</small>
+      </div>
+      <div class="cat-meta">
+        <span class="normal-bal-badge">{{ category.get_normal_balance_display }}</span>
+      </div>
+      <div class="card-sparkline">
+        <div class="sparkline-bar"></div>
+      </div>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary btn-sm" onclick="expandAll()">
-            <i class="fas fa-expand me-1"></i>
-            توسيع الكل
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="collapseAll()">
-            <i class="fas fa-compress me-1"></i>
-            طي الكل
-        </button>
-    </div>
+  </div>
+  {% endfor %}
 </div>
 
 <!-- شجرة الحسابات -->
 {% for category in categories %}
 <div class="category-card category-{{ category.code }}">
-    <!-- رأس الفئة - ملون حسب النوع -->
-    <div class="category-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h5>
-                    <i class="fas fa-folder-open me-2"></i>
-                    {{ category.code }} - {{ category.name_ar }}
-                </h5>
-                <small class="text-white-50">{{ category.name_en }}</small>
-            </div>
-            <span class="badge bg-light text-dark px-3 py-2">
-                <i class="fas fa-balance-scale me-1"></i>
-                {{ category.get_normal_balance_display }}
-            </span>
+  <div class="category-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h5>
+          <i class="fas fa-folder-open me-2"></i>
+          {{ category.code }} - {{ category.name_ar }}
+        </h5>
+        <small>{{ category.name_en }}</small>
+      </div>
+      <div class="text-end">
+        <div class="badge bg-light text-dark px-3 py-2 mb-1">
+          {{ category.get_normal_balance_display }}
         </div>
+        <div style="font-size:0.85rem; opacity:0.9; color:white;">
+          الرصيد: <strong>{{ category.total_balance|floatformat:2 }} ر.س</strong>
+        </div>
+      </div>
     </div>
-    
-    <!-- محتوى الفئة -->
-    <div class="category-content">
-        {% for group in category.groups.all %}
-        <div class="group-wrapper">
-            <!-- رأس المجموعة - رمادي موحد -->
-            <div class="group-header" onclick="toggleGroup(this)">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-chevron-down toggle-icon"></i>
-                    <span class="group-code">{{ group.code }}</span>
-                    <span class="group-name">{{ group.name_ar }}</span>
-                    <small class="text-muted ms-3">({{ group.name_en }})</small>
-                </div>
-                <span class="badge">{{ group.get_normal_balance_display }}</span>
-            </div>
-            
-            <!-- جدول حسابات المجموعة -->
-            <div class="group-content">
-                <table class="accounts-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 120px;">كود الحساب</th>
-                            <th>اسم الحساب</th>
-                            <th style="width: 150px;">الاسم الإنجليزي</th>
-                            <th style="width: 90px;">النوع</th>
-                            <th style="width: 120px;">الرصيد</th>
-                            <th style="width: 100px;">إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for account in group.accounts.all %}
-                            {% if not account.parent %}
-                                {% include 'invoices/partials/account_row.html' with account=account level=0 %}
-                            {% endif %}
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-3">
-                                لا توجد حسابات في هذه المجموعة
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+  </div>
+
+  <div class="category-content">
+    {% for group in category.groups.all %}
+    <div class="group-wrapper">
+      <div class="group-header" onclick="toggleGroup(this)">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-chevron-down toggle-icon"></i>
+          <span class="group-code">{{ group.code }}</span>
+          <span class="group-name">{{ group.name_ar }}</span>
+          <small class="text-muted ms-3">({{ group.name_en }})</small>
         </div>
-        {% empty %}
-        <div class="p-4 text-center text-muted">
-            لا توجد مجموعات في هذه الفئة
-        </div>
-        {% endfor %}
+        <span class="badge bg-secondary">{{ group.get_normal_balance_display }}</span>
+      </div>
+
+      <div class="group-content">
+        <table class="accounts-table">
+          <thead>
+            <tr>
+              <th style="width:120px;">كود الحساب</th>
+              <th>اسم الحساب</th>
+              <th style="width:150px;">الاسم الإنجليزي</th>
+              <th style="width:90px;">النوع</th>
+              <th style="width:130px;">الرصيد (ر.س)</th>
+              <th style="width:110px;">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for account in group.accounts.all %}
+              {% if not account.parent %}
+                {% include 'invoices/partials/account_row.html' with account=account level=0 %}
+              {% endif %}
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-3">
+                لا توجد حسابات في هذه المجموعة
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+    {% empty %}
+    <div class="p-4 text-center text-muted">لا توجد مجموعات في هذه الفئة</div>
+    {% endfor %}
+  </div>
 </div>
 {% empty %}
 <div class="alert alert-info text-center py-5">
-    <i class="fas fa-sitemap fa-3x mb-3 opacity-50"></i>
-    <h5>لا توجد حسابات مسجلة</h5>
-    <p>قم بإضافة دليل الحسابات أولاً</p>
-    <a href="{% url 'account_add' %}" class="btn btn-gold mt-2">إضافة حساب</a>
+  <i class="fas fa-sitemap fa-3x mb-3 opacity-50"></i>
+  <h5>لا توجد حسابات مسجلة</h5>
+  <p>قم بإضافة دليل الحسابات أولاً</p>
+  <a href="{% url 'account_add' %}" class="btn btn-gold mt-2">إضافة حساب</a>
 </div>
 {% endfor %}
 
-<!-- ملخص سريع -->
-<div class="row g-3 mt-4">
-    {% for category in categories %}
-    <div class="col-md-2 col-sm-4">
-        <div class="border rounded p-3 text-center bg-white">
-            <div class="small text-muted mb-2">{{ category.name_ar }}</div>
-            <div class="fs-5 fw-bold">—</div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
 <script>
-function toggleGroup(header) {
+/* ── تهيئة بطاقات الملخص ── */
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* 1. Counter-up animation للأرقام */
+  function animateCounter(el) {
+    const raw     = parseFloat(el.dataset.value) || 0;
+    const target  = Math.abs(raw);
+    const isNeg   = raw < 0;
+    const duration = 1000;
+    const steps    = 40;
+    const stepTime = duration / steps;
+    let current    = 0;
+
+    el.classList.add('animated');
+
+    const timer = setInterval(function () {
+      current += target / steps;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      el.textContent = (isNeg ? '(' : '') +
+        current.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) +
+        (isNeg ? ')' : '');
+    }, stepTime);
+  }
+
+  /* 2. Sparkline width بناءً على نسبة الرصيد */
+  const cards  = document.querySelectorAll('.summary-card');
+  const values = Array.from(cards).map(c => {
+    const el = c.querySelector('.balance-number');
+    return el ? Math.abs(parseFloat(el.dataset.value) || 0) : 0;
+  });
+  const maxVal = Math.max(...values, 1);
+
+  cards.forEach(function (card, i) {
+    const el  = card.querySelector('.balance-number');
+    const bar = card.querySelector('.sparkline-bar');
+
+    if (el) {
+      /* شغّل العداد بعد تأخير بسيط لكل بطاقة */
+      setTimeout(function () { animateCounter(el); }, i * 80 + 200);
+    }
+
+    if (bar) {
+      const pct = (values[i] / maxVal) * 100;
+      setTimeout(function () {
+        bar.style.width = Math.max(pct, 8) + '%';
+      }, i * 80 + 300);
+    }
+  });
+
+  /* 3. Tooltip عند Hover يعرض الرصيد الكامل */
+  cards.forEach(function (card) {
+    const el  = card.querySelector('.balance-number');
+    const val = el ? parseFloat(el.dataset.value) || 0 : 0;
+    card.title = val.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' ر.س';
+  });
+
+  /* ── دوال التوسيع والطي الموجودة ── */
+  window.toggleGroup = function (header) {
     header.classList.toggle('collapsed');
     const content = header.nextElementSibling;
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-    } else {
-        content.style.display = 'none';
-    }
-}
-
-function expandAll() {
-    document.querySelectorAll('.group-header').forEach(h => {
-        h.classList.remove('collapsed');
-        h.nextElementSibling.style.display = 'block';
+    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+  };
+  window.expandAll = function () {
+    document.querySelectorAll('.group-header').forEach(function (h) {
+      h.classList.remove('collapsed');
+      h.nextElementSibling.style.display = 'block';
     });
-}
-
-function collapseAll() {
-    document.querySelectorAll('.group-header').forEach(h => {
-        h.classList.add('collapsed');
-        h.nextElementSibling.style.display = 'none';
+  };
+  window.collapseAll = function () {
+    document.querySelectorAll('.group-header').forEach(function (h) {
+      h.classList.add('collapsed');
+      h.nextElementSibling.style.display = 'none';
     });
-}
+  };
+    collapseAll();
+});
 </script>
 {% endblock %}

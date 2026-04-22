@@ -1,4 +1,3 @@
-<!-- templates/invoices/journal_list.html -->
 {% extends 'base.html' %}
 {% load static %}
 
@@ -8,181 +7,283 @@
 {% block extra_css %}
 <style>
 .journal-table th {
-    background: var(--secondary);
-    color: var(--accent);
-    font-size: 0.85rem;
-    font-weight: 600;
-    white-space: nowrap;
+  background: var(--secondary);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.journal-table td {
-    vertical-align: middle;
-}
-.journal-table .badge-status {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-}
-.btn-action {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-}
+.journal-table td { vertical-align: middle; }
+.badge-status { font-size: 0.75rem; padding: 4px 8px; }
+.btn-action   { padding: 4px 8px; font-size: 0.75rem; }
 .entry-number {
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    color: var(--accent);
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ── pagination مطابقة للمبيعات ── */
+.pagination { gap: 3px; }
+.pagination .page-link {
+  border-radius: 6px !important;
+  margin: 0;
+  min-width: 36px;
+  text-align: center;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: .375rem .5rem;
+}
+.pagination .page-link:hover {
+  background-color: #f8f9fa;
+  border-color: #c1c9d0;
+  color: #212529;
+}
+.pagination .active .page-link {
+  background: linear-gradient(135deg, #C9A84C, #b89638);
+  border-color: #C9A84C;
+  color: white;
+}
+.pagination .disabled .page-link {
+  background-color: #f8f9fa;
+  color: #adb5bd;
+  pointer-events: none;
+}
+
+/* search box */
+.search-box { position: relative; }
+.search-box i {
+  position: absolute;
+  right: 15px; top: 50%;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  pointer-events: none;
 }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- بطاقة التصفية -->
+<!-- ── بطاقة البحث ── -->
 <div class="data-card mb-4">
   <div class="card-header">
     <h6><i class="fas fa-filter me-2"></i> تصفية القيود</h6>
+    {% if q or date_from or date_to or entry_type or status %}
+    <a href="{% url 'journal_entries_list' %}" class="btn btn-sm btn-outline-light">
+      <i class="fas fa-times me-1"></i> مسح الكل
+    </a>
+    {% endif %}
   </div>
-  <div class="p-3">
-    <form method="get" class="row g-3">
-      <div class="col-md-3">
-        <input type="text" name="q" class="form-control" placeholder="بحث برقم القيد أو البيان..." value="{{ q }}">
-      </div>
-      <div class="col-md-2">
-        <input type="date" name="date_from" class="form-control" value="{{ date_from }}" placeholder="من تاريخ">
-      </div>
-      <div class="col-md-2">
-        <input type="date" name="date_to" class="form-control" value="{{ date_to }}" placeholder="إلى تاريخ">
-      </div>
-      <div class="col-md-2">
-        <select name="entry_type" class="form-select">
-          <option value="">كل الأنواع</option>
-          {% for value, label in entry_types %}
-          <option value="{{ value }}" {% if entry_type == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2">
-        <select name="status" class="form-select">
-          <option value="">كل الحالات</option>
-          {% for value, label in statuses %}
-          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-1">
-        <button type="submit" class="btn btn-gold w-100">
-          <i class="fas fa-search"></i>
-        </button>
+
+  <div class="p-3 border-bottom">
+    <!-- البحث الرئيسي -->
+    <form method="get" id="search-form">
+      <div class="row g-2">
+        <div class="col-md-8">
+          <div class="search-box">
+            <input type="text" name="q" value="{{ q }}"
+                   class="form-control" placeholder="بحث برقم القيد أو البيان...">
+            <i class="fas fa-search"></i>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-dark-main" style="flex:1">
+              <i class="fas fa-search"></i>
+              <span class="d-none d-sm-inline ms-1">بحث</span>
+            </button>
+            {% if q or date_from or date_to or entry_type or status %}
+            <a href="{% url 'journal_entries_list' %}" class="btn btn-outline-secondary" style="flex:1">
+              <i class="fas fa-times"></i>
+              <span class="d-none d-sm-inline ms-1">مسح</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </form>
-  </div>
-</div>
 
-<!-- بطاقة القيود -->
-<div class="data-card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h6><i class="fas fa-book me-2"></i> القيود اليومية</h6>
-    <div class="d-flex gap-2">
-      <a href="{% url 'journal_export_excel' %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-outline-success">
-        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+    <!-- بحث متقدم -->
+    <div class="mt-2 text-end">
+      <a class="advanced" data-bs-toggle="collapse"
+         href="#collapseAdvanced" role="button"
+         aria-expanded="false" aria-controls="collapseAdvanced">
+        بحث متقدم <i class="fas fa-angle-down"></i>
       </a>
-      <a href="{% url 'journal_entry_add' %}" class="btn btn-sm btn-gold">
-        <i class="fas fa-plus me-1"></i> قيد جديد
+    </div>
+
+    <div class="collapse mt-3" id="collapseAdvanced">
+      <div class="card card-body" style="background:#f8f9fa;border:1px solid #dee2e6;">
+        <form method="GET">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label fw-bold">من تاريخ</label>
+              <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">إلى تاريخ</label>
+              <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">نوع القيد</label>
+              <select name="entry_type" class="form-select">
+                <option value="">كل الأنواع</option>
+                {% for value, label in entry_types %}
+                <option value="{{ value }}" {% if entry_type == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">الحالة</label>
+              <select name="status" class="form-select">
+                <option value="">كل الحالات</option>
+                {% for value, label in statuses %}
+                <option value="{{ value }}" {% if status == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-dark-main">
+                <i class="fas fa-search me-1"></i> بحث متقدم
+              </button>
+              <a href="{% url 'journal_entries_list' %}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-undo me-1"></i> إعادة تهيئة
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- شريط عدد الصفوف + تصدير -->
+  <div class="p-3 bg-light border-bottom">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">عدد الصفوف:</span>
+        <select class="form-select form-select-sm" style="width:auto;min-width:110px;"
+                onchange="changePageSize(this.value)">
+          {% for sz in page_sizes %}
+          <option value="{{ sz }}" {% if page_size == sz %}selected{% endif %}>
+            {{ sz }} قيد
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <a href="{% url 'journal_export_excel' %}?{{ request.GET.urlencode }}"
+         class="btn btn-success btn-sm">
+        <i class="fas fa-file-excel me-1"></i>
+        <span class="d-none d-sm-inline">تصدير Excel</span>
       </a>
     </div>
   </div>
-  
+</div>
+
+<!-- ── جدول القيود ── -->
+<div class="data-card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h6>
+      <i class="fas fa-book me-2"></i> القيود اليومية
+      <span class="badge bg-secondary ms-2" style="font-size:.72rem">{{ total_count }}</span>
+    </h6>
+    <a href="{% url 'journal_entry_add' %}" class="btn btn-sm btn-gold">
+      <i class="fas fa-plus me-1"></i> قيد جديد
+    </a>
+  </div>
+
   <div class="table-responsive">
-    <table class="table table-hover mb-0 journal-table">
-      <thead>
+    <table class="table table-hover align-middle table-bordered mb-0 journal-table">
+      <thead class="table-light">
         <tr>
-          <th>رقم القيد</th>
-          <th>التاريخ</th>
-          <th>النوع</th>
+          <th class="text-center">رقم القيد</th>
+          <th class="text-center">التاريخ</th>
+          <th class="text-center">النوع</th>
           <th>البيان</th>
-          <th>المرجع</th>
-          <th class="text-end">مدين</th>
-          <th class="text-end">دائن</th>
-          <th>الحالة</th>
-          <th style="width: 120px;">إجراءات</th>
+          <th class="text-center">المرجع</th>
+          <th class="text-end">مدين (ر.س)</th>
+          <th class="text-end">دائن (ر.س)</th>
+          <th class="text-center">الحالة</th>
+          <th class="text-center" style="min-width:130px;">إجراءات</th>
         </tr>
       </thead>
       <tbody>
         {% for entry in entries %}
         <tr>
-          <td>
+          <td class="text-center">
             <a href="{% url 'journal_entry_detail' entry.pk %}" class="text-decoration-none">
               <span class="entry-number">{{ entry.number }}</span>
             </a>
           </td>
-          <td>{{ entry.date|date:"Y-m-d" }}</td>
-          <td>
-            <span class="badge bg-secondary badge-status">{{ entry.get_entry_type_display }}</span>
+          <td class="text-center">
+            <span class="text-muted small">{{ entry.date|date:"Y-m-d" }}</span>
           </td>
-          <td class="text-truncate" style="max-width: 250px;">{{ entry.description }}</td>
-          <td>{{ entry.reference|default:"—" }}</td>
+          <td class="text-center">
+            <span class="badge bg-secondary badge-status">
+              {{ entry.get_entry_type_display }}
+            </span>
+          </td>
+          <td class="text-truncate" style="max-width:240px;">{{ entry.description }}</td>
+          <td class="text-center text-muted small">{{ entry.reference|default:"—" }}</td>
           <td class="text-end">
-            <span class="fw-bold" style="color: #2E7D32;">
+            <span class="fw-bold" style="color:#2E7D32;">
               {{ entry.total_debit|floatformat:2 }}
             </span>
           </td>
           <td class="text-end">
-            <span class="fw-bold" style="color: #C62828;">
+            <span class="fw-bold" style="color:#C62828;">
               {{ entry.total_credit|floatformat:2 }}
             </span>
           </td>
-          <td>
+          <td class="text-center">
             {% if entry.status == 'posted' %}
-            <span class="badge bg-success badge-status">
-              <i class="fas fa-check-circle me-1"></i> مرحّل
-            </span>
+              <span class="badge bg-success badge-status">
+                <i class="fas fa-check-circle me-1"></i>مرحّل
+              </span>
             {% elif entry.status == 'draft' %}
-            <span class="badge bg-warning text-dark badge-status">
-              <i class="fas fa-pencil-alt me-1"></i> مسودة
-            </span>
+              <span class="badge bg-warning text-dark badge-status">
+                <i class="fas fa-pencil-alt me-1"></i>مسودة
+              </span>
             {% elif entry.status == 'reversed' %}
-            <span class="badge bg-info badge-status">
-              <i class="fas fa-undo me-1"></i> معكوس
-            </span>
+              <span class="badge bg-info badge-status">
+                <i class="fas fa-undo me-1"></i>معكوس
+              </span>
             {% elif entry.status == 'cancelled' %}
-            <span class="badge bg-secondary badge-status">
-              <i class="fas fa-ban me-1"></i> ملغي
-            </span>
+              <span class="badge bg-secondary badge-status">
+                <i class="fas fa-ban me-1"></i>ملغي
+              </span>
             {% endif %}
           </td>
-          <td>
-            <div class="btn-group btn-group-sm" role="group">
-              <!-- عرض -->
-              <a href="{% url 'journal_entry_detail' entry.pk %}" 
-                 class="btn btn-outline-primary btn-action" 
-                 title="عرض">
+          <td class="text-center">
+            <div class="d-flex gap-1 justify-content-center">
+              <a href="{% url 'journal_entry_detail' entry.pk %}"
+                 class="btn btn-sm btn-outline-primary btn-action" title="عرض">
                 <i class="fas fa-eye"></i>
               </a>
-              
-              <!-- ترحيل (للمسودة فقط) -->
+
               {% if entry.status == 'draft' %}
-              <a href="{% url 'journal_entry_post' entry.pk %}" 
-                 class="btn btn-outline-success btn-action" 
-                 title="ترحيل"
-                 onclick="return confirm('هل أنت متأكد من ترحيل هذا القيد؟')">
+              <a href="{% url 'journal_entry_edit' entry.pk %}"
+                 class="btn btn-sm btn-outline-secondary btn-action" title="تعديل">
+                <i class="fas fa-edit"></i>
+              </a>
+              <a href="{% url 'journal_entry_post' entry.pk %}"
+                 class="btn btn-sm btn-outline-success btn-action" title="ترحيل"
+                 onclick="return confirm('ترحيل القيد {{ entry.number }}؟')">
                 <i class="fas fa-check"></i>
               </a>
-              {% endif %}
-              
-              <!-- عكس (للمرحل فقط) -->
-              {% if entry.status == 'posted' %}
-              <a href="{% url 'journal_entry_reverse' entry.pk %}" 
-                 class="btn btn-outline-warning btn-action" 
-                 title="عكس القيد">
-                <i class="fas fa-undo"></i>
+              <a href="{% url 'journal_entry_delete' entry.pk %}"
+                 class="btn btn-sm btn-outline-danger btn-action" title="حذف"
+                 onclick="return confirm('حذف القيد {{ entry.number }}؟ لا يمكن التراجع.')">
+                <i class="fas fa-trash"></i>
               </a>
               {% endif %}
-              
-              <!-- حذف (للمسودة فقط) -->
-              {% if entry.status == 'draft' %}
-              <a href="{% url 'journal_entry_delete' entry.pk %}" 
-                 class="btn btn-outline-danger btn-action" 
-                 title="حذف"
-                 onclick="return confirm('هل أنت متأكد من حذف هذا القيد؟ لا يمكن التراجع عن هذا الإجراء.')">
-                <i class="fas fa-trash"></i>
+
+              {% if entry.status == 'posted' %}
+              <a href="{% url 'journal_entry_reverse' entry.pk %}"
+                 class="btn btn-sm btn-outline-warning btn-action" title="عكس القيد">
+                <i class="fas fa-undo"></i>
               </a>
               {% endif %}
             </div>
@@ -193,58 +294,143 @@
           <td colspan="9" class="text-center text-muted py-5">
             <i class="fas fa-book-open fa-3x mb-3 d-block opacity-25"></i>
             <h6>لا توجد قيود يومية</h6>
-            <p class="small">ابدأ بإضافة قيد جديد</p>
-            <a href="{% url 'journal_entry_add' %}" class="btn btn-gold btn-sm mt-2">
+            <p class="small mb-3">
+              {% if q or date_from or date_to or entry_type or status %}
+                لا توجد نتائج للفلاتر المحددة
+              {% else %}
+                ابدأ بإضافة قيد جديد
+              {% endif %}
+            </p>
+            <a href="{% url 'journal_entry_add' %}" class="btn btn-gold btn-sm">
               <i class="fas fa-plus me-1"></i> إضافة قيد
             </a>
           </td>
         </tr>
         {% endfor %}
       </tbody>
+
+      {% if entries %}
+      <tfoot class="table-light">
+        <tr>
+          <td colspan="8" class="text-start fw-bold">الإجمالي المعروض</td>
+          <td colspan="1" class="text-end fw-bold text-muted small">
+            {{ entries|length }} قيد في هذه الصفحة
+          </td>
+        </tr>
+      </tfoot>
+      {% endif %}
     </table>
   </div>
-  
-  <!-- Pagination -->
-  {% if paginator.num_pages > 1 %}
+
+  <!-- ── Pagination — مطابق للمبيعات ── -->
+  <!-- ── Pagination ── -->
   <div class="p-3 border-top">
-    <div class="d-flex justify-content-between align-items-center">
+
+    <!-- معلومات مشتركة -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+      <!-- يسار: معلومات العرض -->
       <div class="text-muted small">
-        عرض {{ entries.start_index }} - {{ entries.end_index }} من {{ total_count }} قيد
+        الصفحة {{ entries.number }} من {{ paginator.num_pages }}
+        &nbsp;|&nbsp;
+        عرض {{ start_index }} – {{ end_index }} من {{ total_count }} قيد
       </div>
+
+      <!-- وسط: أزرار التنقل -->
+      {% if paginator.num_pages > 1 %}
       <nav>
-        <ul class="pagination pagination-sm mb-0">
-          {% if entries.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ entries.previous_page_number }}&{{ request.GET.urlencode }}">&laquo;</a>
+        <ul class="pagination mb-0">
+
+          <!-- الأولى -->
+          <li class="page-item {% if entries.number == 1 %}disabled{% endif %}">
+            <a class="page-link"
+               href="?page=1{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
           </li>
-          {% endif %}
-          
+
+          <!-- السابقة — ✅ نستخدم entries.number - 1 بدلاً من previous_page_number -->
+          <li class="page-item {% if entries.number == 1 %}disabled{% endif %}">
+            <a class="page-link"
+               href="?page={% if entries.number > 1 %}{{ entries.number|add:"-1" }}{% else %}1{% endif %}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-right"></i>
+            </a>
+          </li>
+
+          <!-- أرقام الصفحات -->
           {% for p in page_range %}
             {% if p == '...' %}
-            <li class="page-item disabled"><span class="page-link">...</span></li>
+            <li class="page-item disabled">
+              <span class="page-link">...</span>
+            </li>
             {% else %}
-            <li class="page-item {% if p == entries.number %}active{% endif %}">
-              <a class="page-link" href="?page={{ p }}&{{ request.GET.urlencode }}">{{ p }}</a>
+            <li class="page-item {% if entries.number == p %}active{% endif %}">
+              <a class="page-link"
+                 href="?page={{ p }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">
+                {{ p }}
+              </a>
             </li>
             {% endif %}
           {% endfor %}
-          
-          {% if entries.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ entries.next_page_number }}&{{ request.GET.urlencode }}">&raquo;</a>
+
+          <!-- التالية — ✅ نستخدم entries.number + 1 بدلاً من next_page_number -->
+          <li class="page-item {% if entries.number == paginator.num_pages %}disabled{% endif %}">
+            <a class="page-link"
+               href="?page={% if entries.number < paginator.num_pages %}{{ entries.number|add:"1" }}{% else %}{{ paginator.num_pages }}{% endif %}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-left"></i>
+            </a>
           </li>
-          {% endif %}
+
+          <!-- الأخيرة -->
+          <li class="page-item {% if entries.number == paginator.num_pages %}disabled{% endif %}">
+            <a class="page-link"
+               href="?page={{ paginator.num_pages }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+          </li>
+
         </ul>
       </nav>
-      <select class="form-select form-select-sm" style="width: 80px;" 
-              onchange="location.href='?page_size=' + this.value + '&{{ request.GET.urlencode }}'">
-        {% for sz in page_sizes %}
-        <option value="{{ sz }}" {% if page_size == sz %}selected{% endif %}>{{ sz }}</option>
-        {% endfor %}
-      </select>
+      {% endif %}
+
+      <!-- يمين: حجم الصفحة -->
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">عرض:</span>
+        <select class="form-select form-select-sm" style="width:80px"
+                onchange="changePageSize(this.value)">
+          {% for sz in page_sizes %}
+          <option value="{{ sz }}" {% if page_size == sz %}selected{% endif %}>{{ sz }}</option>
+          {% endfor %}
+        </select>
+        <span class="text-muted small">/ صفحة</span>
+      </div>
+
     </div>
   </div>
-  {% endif %}
-</div>
 
+<script>
+function changePageSize(size) {
+  var url = new URL(window.location.href);
+  url.searchParams.set('page_size', size);
+  url.searchParams.set('page', 1);  {# ✅ إعادة التعيين للصفحة 1 #}
+  window.location.href = url.toString();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  var hasFilters = {% if date_from or date_to or entry_type or status %}true{% else %}false{% endif %};
+  if (hasFilters) {
+    var el = document.getElementById('collapseAdvanced');
+    if (el) new bootstrap.Collapse(el, { show: true });
+  }
+});
+</script>
+
+<style>
+.advanced {
+  color: #0f0f1e; cursor: pointer; text-decoration: none;
+  font-weight: 500; display: inline-flex; align-items: center; gap: 5px;
+}
+.advanced:hover { color: #b89638; text-decoration: underline; }
+.search-box i { right: 15px; }
+</style>
 {% endblock %}

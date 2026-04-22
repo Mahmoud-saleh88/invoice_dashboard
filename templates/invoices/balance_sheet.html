@@ -1,154 +1,341 @@
 {% extends "base.html" %}
 {% block title %}الميزانية العمومية{% endblock %}
 {% block page_title %}الميزانية العمومية{% endblock %}
+
+{% block extra_css %}
+<style>
+.bs-section-header {
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: .85rem;
+  color: white;
+  border-radius: 6px 6px 0 0;
+}
+.bs-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  font-size: .85rem;
+  transition: background .15s;
+}
+.bs-row:hover { background: #fafbfc; }
+.bs-row .acc-code {
+  font-family: 'Courier New', monospace;
+  font-size: .75rem;
+  color: #aaa;
+  margin-left: 8px;
+}
+.bs-subtotal {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: .88rem;
+  background: rgba(0,0,0,.04);
+  border-top: 2px solid rgba(0,0,0,.08);
+}
+.bs-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  color: white;
+}
+.shortcut-btn {
+  font-size: .75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #dee2e6;
+  background: white;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+  color: #495057;
+}
+.shortcut-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.shortcut-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.bs-card {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  margin-bottom: 16px;
+}
+@media print {
+  .no-print { display: none !important; }
+  .bs-card { box-shadow: none; border: 1px solid #ddd; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="data-card">
+
+<!-- ── شريط التحكم ── -->
+<div class="data-card mb-4 no-print">
   <div class="card-header">
     <h6><i class="fas fa-balance-scale-right me-2"></i> الميزانية العمومية</h6>
     <div class="d-flex gap-2">
-      <form method="get" class="d-flex gap-2">
-        <input type="date" name="as_of_date" value="{{ as_of }}" class="form-control form-control-sm">
-        <button type="submit" class="btn btn-gold btn-sm">عرض</button>
-      </form>
-      <button onclick="window.print()" class="btn btn-outline-light btn-sm"><i class="fas fa-print"></i></button>
+      <a href="?as_of={{ as_of }}&export=excel" class="btn btn-sm btn-outline-success">
+        <i class="fas fa-file-excel me-1"></i> Excel
+      </a>
+      {% comment %} <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-print me-1"></i> طباعة
+      </button> {% endcomment %}
     </div>
   </div>
-  <div class="p-4">
-    <h5 class="text-center fw-bold mb-4">الميزانية العمومية بتاريخ {{ as_of }}</h5>
-    <div class="row g-4">
 
-      <!-- العمود الأيسر: الأصول -->
-      <div class="col-md-6">
-        <div class="card border-primary h-100">
-          <div class="card-header bg-primary text-white fw-bold"><i class="fas fa-building me-2"></i> الأصول (مدين)</div>
-          <div class="card-body p-0">
-            <!-- أصول متداولة -->
-            <div class="p-3 border-bottom">
-              <h6 class="fw-bold text-primary mb-2">أصول متداولة</h6>
-              {% for row in current_assets %}
-              <div class="d-flex justify-content-between py-1">
-                <span class="text-muted small">{{ row.account.name_ar }}</span>
-                <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
-              </div>
-              {% endfor %}
-              <div class="d-flex justify-content-between py-1 border-top mt-1 fw-bold text-primary">
-                <span>إجمالي الأصول المتداولة</span>
-                <span>{{ cur_assets_total|floatformat:2 }} ر.س</span>
-              </div>
-            </div>
-            <!-- أصول ثابتة -->
-            <div class="p-3 border-bottom">
-              <h6 class="fw-bold text-primary mb-2">أصول ثابتة</h6>
-              {% for row in fixed_assets %}
-              <div class="d-flex justify-content-between py-1">
-                <span class="text-muted small">{{ row.account.name_ar }}</span>
-                <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
-              </div>
-              {% endfor %}
-              <div class="d-flex justify-content-between py-1 border-top mt-1 fw-bold text-primary">
-                <span>إجمالي الأصول الثابتة</span>
-                <span>{{ fixed_assets_total|floatformat:2 }} ر.س</span>
-              </div>
-            </div>
-            <!-- أصول غير ملموسة -->
-            {% if intangible_assets %}
-            <div class="p-3 border-bottom">
-              <h6 class="fw-bold text-primary mb-2">أصول غير ملموسة</h6>
-              {% for row in intangible_assets %}
-              <div class="d-flex justify-content-between py-1">
-                <span class="text-muted small">{{ row.account.name_ar }}</span>
-                <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% endif %}
-            <div class="p-3 bg-primary bg-opacity-10">
-              <div class="d-flex justify-content-between fw-bold fs-5 text-primary">
-                <span>إجمالي الأصول</span>
-                <span>{{ total_assets|floatformat:2 }} ر.س</span>
-              </div>
-            </div>
-          </div>
-        </div>
+  <div class="p-3">
+    <!-- تاريخ التقرير -->
+    <form method="get" class="row g-2 align-items-end mb-3">
+      <div class="col-auto">
+        <label class="form-label fw-bold small mb-1">بتاريخ</label>
+        <input type="date" name="as_of" value="{{ as_of }}"
+               class="form-control form-control-sm" style="width:160px">
       </div>
-
-      <!-- العمود الأيمن: الالتزامات + حقوق الملكية -->
-      <div class="col-md-6">
-        <!-- الالتزامات -->
-        <div class="card border-danger mb-4">
-          <div class="card-header bg-danger text-white fw-bold"><i class="fas fa-hand-holding-usd me-2"></i> الالتزامات (دائن)</div>
-          <div class="card-body p-0">
-            <div class="p-3 border-bottom">
-              <h6 class="fw-bold text-danger mb-2">التزامات متداولة</h6>
-              {% for row in current_liab %}
-              <div class="d-flex justify-content-between py-1">
-                <span class="text-muted small">{{ row.account.name_ar }}</span>
-                <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
-              </div>
-              {% endfor %}
-              <div class="d-flex justify-content-between py-1 border-top mt-1 fw-bold text-danger">
-                <span>إجمالي الالتزامات المتداولة</span>
-                <span>{{ cur_liab_total|floatformat:2 }} ر.س</span>
-              </div>
-            </div>
-            {% if long_term_liab %}
-            <div class="p-3 border-bottom">
-              <h6 class="fw-bold text-danger mb-2">التزامات طويلة الأجل</h6>
-              {% for row in long_term_liab %}
-              <div class="d-flex justify-content-between py-1">
-                <span class="text-muted small">{{ row.account.name_ar }}</span>
-                <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
-              </div>
-              {% endfor %}
-              <div class="d-flex justify-content-between py-1 border-top mt-1 fw-bold text-danger">
-                <span>إجمالي الالتزامات طويلة الأجل</span>
-                <span>{{ lt_liab_total|floatformat:2 }} ر.س</span>
-              </div>
-            </div>
-            {% endif %}
-            <div class="p-3 bg-danger bg-opacity-10">
-              <div class="d-flex justify-content-between fw-bold text-danger">
-                <span>إجمالي الالتزامات</span>
-                <span>{{ total_liabilities|floatformat:2 }} ر.س</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- حقوق الملكية -->
-        <div class="card border-success">
-          <div class="card-header bg-success text-white fw-bold"><i class="fas fa-award me-2"></i> حقوق الملكية (دائن)</div>
-          <div class="card-body p-0">
-            <div class="p-3 border-bottom">
-              {% for row in equity_rows %}
-              <div class="d-flex justify-content-between py-1">
-                <span class="text-muted small">{{ row.account.name_ar }}</span>
-                <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            <div class="p-3 bg-success bg-opacity-10">
-              <div class="d-flex justify-content-between fw-bold text-success">
-                <span>إجمالي حقوق الملكية</span>
-                <span>{{ total_equity|floatformat:2 }} ر.س</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- التحقق من التوازن -->
-        <div class="mt-3">
-          {% if is_balanced %}
-          <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i> الميزانية متوازنة ✓</div>
-          {% else %}
-          <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            الميزانية غير متوازنة - الفرق: {{ difference|floatformat:2 }} ر.س
-          </div>
-          {% endif %}
-        </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-gold btn-sm">
+          <i class="fas fa-sync me-1"></i> تحديث
+        </button>
       </div>
+    </form>
+
+    <!-- ✅ أزرار الاختصار -->
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="text-muted small me-1">اختصارات:</span>
+      {% for sc in shortcuts %}
+      <a href="?as_of={{ sc.date }}"
+         class="shortcut-btn {% if sc.date == as_of %}active{% endif %}">
+        {{ sc.label }}
+      </a>
+      {% endfor %}
     </div>
   </div>
 </div>
+<!-- ✅ تحذير التاريخ -->
+{% if date_warning %}
+<div class="alert alert-{{ date_warning.level }} d-flex align-items-center gap-3 mb-4 no-print"
+     style="border-radius:10px">
+  <i class="fas fa-{% if date_warning.type == 'future' %}clock
+                    {% elif date_warning.type == 'ancient' or date_warning.type == 'before_history' %}history
+                    {% else %}exclamation-circle{% endif %} fa-lg"></i>
+  <div>
+    {{ date_warning.msg }}
+    {% if date_warning.type == 'before_history' or date_warning.type == 'ancient' %}
+    <div class="mt-1 small opacity-75">
+      الأرصدة الظاهرة هي الأرصدة الافتتاحية المدخلة يدوياً فقط،
+      ولا تعكس أي حركات محاسبية.
+    </div>
+    {% endif %}
+  </div>
+  <a href="?as_of={{ today }}" class="btn btn-sm btn-outline-{{ date_warning.level }} ms-auto">
+    استخدام تاريخ اليوم
+  </a>
+</div>
+{% endif %}
+<!-- ── عنوان التقرير ── -->
+<div class="text-center mb-4">
+  <h5 class="fw-bold mb-1">الميزانية العمومية</h5>
+  <div class="text-muted small">بتاريخ {{ as_of }}</div>
+  {% if not is_balanced %}
+  <div class="badge bg-danger mt-2 px-3 py-2">
+    <i class="fas fa-exclamation-triangle me-1"></i>
+    الميزانية غير متوازنة — الفرق: {{ difference|floatformat:2 }} ر.س
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+
+  <!-- ══ العمود الأيسر: الأصول ══ -->
+  <div class="col-md-6">
+
+    <!-- أصول متداولة -->
+    <div class="bs-card">
+      <div class="bs-section-header" style="background:#1565C0">
+        <i class="fas fa-coins me-2"></i> أصول متداولة
+      </div>
+      {% for row in current_assets %}
+      <div class="bs-row">
+        <span>
+          <span class="acc-code">{{ row.account.code }}</span>
+          {{ row.account.name_ar }}
+        </span>
+        <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
+      </div>
+      {% empty %}
+      <div class="bs-row text-muted">لا توجد بيانات</div>
+      {% endfor %}
+      <div class="bs-subtotal" style="color:#1565C0">
+        <span>إجمالي الأصول المتداولة</span>
+        <span>{{ cur_assets_total|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+
+    <!-- أصول ثابتة -->
+    <div class="bs-card">
+      <div class="bs-section-header" style="background:#283593">
+        <i class="fas fa-building me-2"></i> أصول ثابتة
+      </div>
+      {% for row in fixed_assets %}
+      <div class="bs-row">
+        <span>
+          <span class="acc-code">{{ row.account.code }}</span>
+          {{ row.account.name_ar }}
+        </span>
+        <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
+      </div>
+      {% empty %}
+      <div class="bs-row text-muted">لا توجد بيانات</div>
+      {% endfor %}
+      <div class="bs-subtotal" style="color:#283593">
+        <span>إجمالي الأصول الثابتة</span>
+        <span>{{ fixed_assets_total|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+
+    {% if intangible_assets %}
+    <!-- أصول غير ملموسة -->
+    <div class="bs-card">
+      <div class="bs-section-header" style="background:#4527A0">
+        <i class="fas fa-brain me-2"></i> أصول غير ملموسة
+      </div>
+      {% for row in intangible_assets %}
+      <div class="bs-row">
+        <span>
+          <span class="acc-code">{{ row.account.code }}</span>
+          {{ row.account.name_ar }}
+        </span>
+        <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+      <div class="bs-subtotal" style="color:#4527A0">
+        <span>إجمالي الأصول غير الملموسة</span>
+        <span>{{ intang_assets_total|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- إجمالي الأصول -->
+    <div class="bs-card">
+      <div class="bs-total" style="background:#0D47A1">
+        <span><i class="fas fa-sigma me-2"></i> إجمالي الأصول</span>
+        <span>{{ total_assets|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ العمود الأيمن: الالتزامات + حقوق الملكية ══ -->
+  <div class="col-md-6">
+
+    <!-- التزامات متداولة -->
+    <div class="bs-card">
+      <div class="bs-section-header" style="background:#b71c1c">
+        <i class="fas fa-file-invoice-dollar me-2"></i> التزامات متداولة
+      </div>
+      {% for row in current_liab %}
+      <div class="bs-row">
+        <span>
+          <span class="acc-code">{{ row.account.code }}</span>
+          {{ row.account.name_ar }}
+        </span>
+        <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
+      </div>
+      {% empty %}
+      <div class="bs-row text-muted">لا توجد بيانات</div>
+      {% endfor %}
+      <div class="bs-subtotal" style="color:#b71c1c">
+        <span>إجمالي الالتزامات المتداولة</span>
+        <span>{{ cur_liab_total|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+
+    {% if long_term_liab %}
+    <!-- التزامات طويلة الأجل -->
+    <div class="bs-card">
+      <div class="bs-section-header" style="background:#c62828">
+        <i class="fas fa-calendar-alt me-2"></i> التزامات طويلة الأجل
+      </div>
+      {% for row in long_term_liab %}
+      <div class="bs-row">
+        <span>
+          <span class="acc-code">{{ row.account.code }}</span>
+          {{ row.account.name_ar }}
+        </span>
+        <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+      <div class="bs-subtotal" style="color:#c62828">
+        <span>إجمالي الالتزامات طويلة الأجل</span>
+        <span>{{ lt_liab_total|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- إجمالي الالتزامات -->
+    <div class="bs-card">
+      <div class="bs-total" style="background:#b71c1c">
+        <span><i class="fas fa-sigma me-2"></i> إجمالي الالتزامات</span>
+        <span>{{ total_liabilities|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+
+    <!-- حقوق الملكية -->
+    <div class="bs-card mt-3">
+      <div class="bs-section-header" style="background:#1b5e20">
+        <i class="fas fa-award me-2"></i> حقوق الملكية
+      </div>
+      {% for row in equity_rows %}
+      <div class="bs-row">
+        <span>
+          <span class="acc-code">{{ row.account.code }}</span>
+          {{ row.account.name_ar }}
+        </span>
+        <span class="fw-bold">{{ row.balance|floatformat:2 }}</span>
+      </div>
+      {% empty %}
+      <div class="bs-row text-muted">لا توجد بيانات</div>
+      {% endfor %}
+      <div class="bs-subtotal" style="color:#1b5e20">
+        <span>إجمالي حقوق الملكية</span>
+        <span>{{ total_equity|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+
+    <!-- إجمالي الالتزامات + حقوق الملكية -->
+    <div class="bs-card">
+      <div class="bs-total" style="background:#1b5e20">
+        <span><i class="fas fa-sigma me-2"></i> إجمالي الالتزامات + حقوق الملكية</span>
+        <span>{{ total_liab_equity|floatformat:2 }} ر.س</span>
+      </div>
+    </div>
+
+    <!-- ✅ بطاقة التوازن -->
+    <div class="bs-card">
+      {% if is_balanced %}
+      <div class="bs-total" style="background:#2e7d32">
+        <span><i class="fas fa-check-circle me-2"></i> الميزانية متوازنة</span>
+        <span>الأصول = الالتزامات + حقوق الملكية ✓</span>
+      </div>
+      {% else %}
+      <div class="bs-total" style="background:#c62828">
+        <span><i class="fas fa-exclamation-triangle me-2"></i> غير متوازنة</span>
+        <span>الفرق: {{ difference|floatformat:2 }} ر.س</span>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
 {% endblock %}
