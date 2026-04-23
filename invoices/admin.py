@@ -56,9 +56,16 @@ class AccountAdmin(admin.ModelAdmin):
     
     def balance_display(self, obj):
         if obj.account_type == 'detail':
-            balance = obj.get_balance()
-            color = 'green' if balance >= 0 else 'red'
-            return format_html('<span style="color: {}; font-weight: bold;">{:,.2f}</span>', color, balance)
+            try:
+                balance = obj.get_balance()
+                balance_float = float(balance)
+                color = 'green' if balance_float >= 0 else 'red'
+                return format_html(
+                    '<span style="color:{};font-weight:bold;">{:,.2f}</span>',
+                    color, balance_float
+                )
+            except Exception:
+                return '-'
         return '-'
     balance_display.short_description = 'الرصيد الحالي'
 
@@ -205,9 +212,15 @@ class ClientAdmin(admin.ModelAdmin):
     
     def balance_display(self, obj):
         if obj.ar_account:
-            balance = obj.ar_account.get_balance()
-            color = 'red' if balance > 0 else 'green'
-            return format_html('<span style="color: {}; font-weight: bold;">{:,.2f}</span>', color, abs(balance))
+            try:
+                balance = float(obj.ar_account.get_balance())  
+                color = 'red' if balance > 0 else 'green'
+                return format_html(
+                    '<span style="color:{};font-weight:bold;">{:,.2f}</span>',
+                    color, abs(balance)
+                )
+            except Exception:
+                return '-'
         return '-'
     balance_display.short_description = 'الرصيد'
 
@@ -221,9 +234,15 @@ class SupplierAdmin(admin.ModelAdmin):
     
     def balance_display(self, obj):
         if obj.ap_account:
-            balance = obj.ap_account.get_balance()
-            color = 'red' if balance > 0 else 'green'
-            return format_html('<span style="color: {}; font-weight: bold;">{:,.2f}</span>', color, abs(balance))
+            try:
+                balance = float(obj.ap_account.get_balance())  
+                color = 'red' if balance > 0 else 'green'
+                return format_html(
+                    '<span style="color:{};font-weight:bold;">{:,.2f}</span>',
+                    color, abs(balance)
+                )
+            except Exception:
+                return '-'
         return '-'
     balance_display.short_description = 'الرصيد'
 
